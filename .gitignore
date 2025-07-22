@@ -1,2 +1,10 @@
 venv/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+node_modules/
+.vscode/
+.DS_Store
+.env
