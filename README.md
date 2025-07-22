@@ -1,6 +1,10 @@
 
-Run API :
+Extension :
 
+npm install
+npm run compile
+
+Run API :
 
 python3 -m venv venv
 source venv/bin/activate  # Linux/Mac

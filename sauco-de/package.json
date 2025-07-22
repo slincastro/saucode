@@ -1,23 +1,67 @@
 {
   "name": "sauco-de",
-  "displayName": "sauco-de",
-  "description": "",
+  "displayName": "Sauco Configuration",
+  "description": "Configure Sauco API URL and settings",
   "version": "0.0.1",
+  "publisher": "saucode",
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:sauco-de.configure",
+    "onCommand:sauco-de.helloWorld"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "sauco-de.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "sauco-de.configure",
+        "title": "Sauco: Configure Settings"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Sauco",
+      "properties": {
+        "sauco-de.apiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "API URL for Sauco"
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "sauco-de.configure",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "sauco-de.configure",
+          "when": "view == explorer",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sauco-de.configure",
+          "title": "Sauco: Configure Settings"
+        },
+        {
+          "command": "sauco-de.helloWorld",
+          "title": "Sauco: Hello World"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
