@@ -459,8 +459,8 @@ function activate(context) {
                 }
                 // Parse the response
                 const result = await response.json();
-                // Show the result
-                vscode.window.showInformationMessage(`Analysis result: ${result.message}`);
+                // Create a side-by-side comparison view
+                await createSideBySideComparison(editor.document.getText(), result.message);
             }
             catch (error) {
                 console.error('Error analyzing code:', error);
@@ -481,6 +481,39 @@ function activate(context) {
         });
     });
     context.subscriptions.push(helloWorldDisposable, configureDisposable, analyzeCodeDisposable, configStatusBarItem, analyzeStatusBarItem);
+}
+/**
+ * Creates a side-by-side comparison view with the original code and analysis result
+ * @param originalCode The original code from the editor
+ * @param analysisResult The analysis result from the API
+ */
+async function createSideBySideComparison(originalCode, analysisResult) {
+    try {
+        // Get the active editor's filename for reference
+        const activeFileName = vscode.window.activeTextEditor?.document.fileName || 'code';
+        const fileName = path.basename(activeFileName);
+        // Create a new untitled document for the analysis result with a descriptive title
+        const analysisDocument = await vscode.workspace.openTextDocument({
+            content: `# Code Analysis for ${fileName}\n\n${analysisResult}`,
+            language: 'markdown' // Use markdown for better formatting
+        });
+        // Get the active editor's view column
+        const activeColumn = vscode.window.activeTextEditor?.viewColumn || vscode.ViewColumn.One;
+        // Show the original document in the active column
+        await vscode.window.showTextDocument(vscode.window.activeTextEditor.document, { viewColumn: activeColumn, preview: false });
+        // Show the analysis result in the column beside
+        await vscode.window.showTextDocument(analysisDocument, {
+            viewColumn: vscode.ViewColumn.Beside,
+            preview: false,
+            preserveFocus: false
+        });
+        // Show a success message with instructions
+        vscode.window.showInformationMessage('Code analysis complete! The analysis is displayed in a side-by-side view.');
+    }
+    catch (error) {
+        console.error('Error creating side-by-side comparison:', error);
+        vscode.window.showErrorMessage(`Error creating side-by-side comparison: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 // This method is called when your extension is deactivated
 function deactivate() { }
