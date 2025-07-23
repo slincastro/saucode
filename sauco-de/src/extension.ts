@@ -4,6 +4,73 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 /**
+ * TreeDataProvider for the Sauco Explorer view
+ */
+class SaucoTreeDataProvider implements vscode.TreeDataProvider<SaucoItem> {
+	private _onDidChangeTreeData: vscode.EventEmitter<SaucoItem | undefined | null | void> = new vscode.EventEmitter<SaucoItem | undefined | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<SaucoItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+	refresh(): void {
+		this._onDidChangeTreeData.fire();
+	}
+
+	getTreeItem(element: SaucoItem): vscode.TreeItem {
+		return element;
+	}
+
+	getChildren(element?: SaucoItem): Thenable<SaucoItem[]> {
+		if (element) {
+			return Promise.resolve([]);
+		} else {
+			// Root items
+			return Promise.resolve([
+				new SaucoItem(
+					'Configuration',
+					'Configure Sauco API settings',
+					vscode.TreeItemCollapsibleState.None,
+					{
+						command: 'sauco-de.configure',
+						title: 'Open Configuration'
+					}
+				),
+				new SaucoItem(
+					'Documentation',
+					'View Sauco documentation',
+					vscode.TreeItemCollapsibleState.None,
+					{
+						command: 'sauco-de.helloWorld', // For now, using helloWorld command
+						title: 'Open Documentation'
+					}
+				)
+			]);
+		}
+	}
+}
+
+/**
+ * Tree item for the Sauco Explorer view
+ */
+class SaucoItem extends vscode.TreeItem {
+	constructor(
+		public readonly label: string,
+		public readonly description: string,
+		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		public readonly command?: vscode.Command
+	) {
+		super(label, collapsibleState);
+		this.tooltip = description;
+		this.description = description;
+	}
+
+	iconPath = {
+		light: vscode.Uri.file(path.join(__filename, '..', '..', 'images', 'icon.svg')),
+		dark: vscode.Uri.file(path.join(__filename, '..', '..', 'images', 'icon.svg'))
+	};
+
+	contextValue = 'saucoItem';
+}
+
+/**
  * Manages the configuration webview panel
  */
 class ConfigurationPanel {
@@ -187,6 +254,10 @@ export function activate(context: vscode.ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "sauco-de" is now active!');
+	
+	// Register the tree data provider for the Sauco Explorer view
+	const saucoTreeDataProvider = new SaucoTreeDataProvider();
+	vscode.window.registerTreeDataProvider('saucoView', saucoTreeDataProvider);
 
 	// Create a status bar item
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);

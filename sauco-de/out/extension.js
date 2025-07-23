@@ -38,6 +38,61 @@ exports.deactivate = deactivate;
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = __importStar(require("vscode"));
+const path = __importStar(require("path"));
+/**
+ * TreeDataProvider for the Sauco Explorer view
+ */
+class SaucoTreeDataProvider {
+    _onDidChangeTreeData = new vscode.EventEmitter();
+    onDidChangeTreeData = this._onDidChangeTreeData.event;
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+    getTreeItem(element) {
+        return element;
+    }
+    getChildren(element) {
+        if (element) {
+            return Promise.resolve([]);
+        }
+        else {
+            // Root items
+            return Promise.resolve([
+                new SaucoItem('Configuration', 'Configure Sauco API settings', vscode.TreeItemCollapsibleState.None, {
+                    command: 'sauco-de.configure',
+                    title: 'Open Configuration'
+                }),
+                new SaucoItem('Documentation', 'View Sauco documentation', vscode.TreeItemCollapsibleState.None, {
+                    command: 'sauco-de.helloWorld', // For now, using helloWorld command
+                    title: 'Open Documentation'
+                })
+            ]);
+        }
+    }
+}
+/**
+ * Tree item for the Sauco Explorer view
+ */
+class SaucoItem extends vscode.TreeItem {
+    label;
+    description;
+    collapsibleState;
+    command;
+    constructor(label, description, collapsibleState, command) {
+        super(label, collapsibleState);
+        this.label = label;
+        this.description = description;
+        this.collapsibleState = collapsibleState;
+        this.command = command;
+        this.tooltip = description;
+        this.description = description;
+    }
+    iconPath = {
+        light: vscode.Uri.file(path.join(__filename, '..', '..', 'images', 'icon.svg')),
+        dark: vscode.Uri.file(path.join(__filename, '..', '..', 'images', 'icon.svg'))
+    };
+    contextValue = 'saucoItem';
+}
 /**
  * Manages the configuration webview panel
  */
@@ -193,6 +248,9 @@ function activate(context) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "sauco-de" is now active!');
+    // Register the tree data provider for the Sauco Explorer view
+    const saucoTreeDataProvider = new SaucoTreeDataProvider();
+    vscode.window.registerTreeDataProvider('saucoView', saucoTreeDataProvider);
     // Create a status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'sauco-de.configure';

@@ -13,10 +13,28 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:sauco-de.configure",
-    "onCommand:sauco-de.helloWorld"
+    "onCommand:sauco-de.helloWorld",
+    "onView:saucoView"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sauco-explorer",
+          "title": "Sauco",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "sauco-explorer": [
+        {
+          "id": "saucoView",
+          "name": "Sauco Explorer"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "sauco-de.helloWorld",
