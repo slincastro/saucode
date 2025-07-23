@@ -466,11 +466,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}, async (progress) => {
 			try {
 				// Prepare the request
-				const analyzeUrl = `${apiUrl}/analyze/`;
+				let analyzeUrl = apiUrl;
+				// Make sure the URL ends with a slash before appending 'analyze/'
+				if (!analyzeUrl.endsWith('/')) {
+					analyzeUrl += '/';
+				}
+				analyzeUrl += 'analyze/';
+				
 				const requestBody = JSON.stringify({ code });
 				
 				// Log the request for debugging
 				console.log(`Sending request to: ${analyzeUrl}`);
+				console.log(`Request body: ${requestBody}`);
+				
+				// Show a more detailed message to help with debugging
+				vscode.window.showInformationMessage(`Sending request to: ${analyzeUrl}`);
 				
 				// Send the request
 				const response = await fetch(analyzeUrl, {
@@ -482,7 +492,8 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				
 				if (!response.ok) {
-					throw new Error(`API request failed with status ${response.status}`);
+					const errorText = await response.text().catch(() => 'No error details available');
+					throw new Error(`API request failed with status ${response.status}: ${errorText}`);
 				}
 				
 				// Parse the response
@@ -493,7 +504,19 @@ export function activate(context: vscode.ExtensionContext) {
 				
 			} catch (error) {
 				console.error('Error analyzing code:', error);
-				vscode.window.showErrorMessage(`Error analyzing code: ${error instanceof Error ? error.message : String(error)}`);
+				
+				// Provide more detailed error message based on the type of error
+				let errorMessage = '';
+				if (error instanceof TypeError && error.message.includes('fetch')) {
+					errorMessage = `Failed to connect to the API server. Please check that:
+1. The API server is running
+2. The API URL is correct (${config.get('apiUrl')})
+3. There are no network issues or firewalls blocking the connection`;
+				} else {
+					errorMessage = `Error analyzing code: ${error instanceof Error ? error.message : String(error)}`;
+				}
+				
+				vscode.window.showErrorMessage(errorMessage);
 			}
 			
 			return Promise.resolve();
