@@ -14,7 +14,8 @@
     "onStartupFinished",
     "onCommand:sauco-de.configure",
     "onCommand:sauco-de.helloWorld",
-    "onView:saucoView"
+    "onView:saucoView",
+    "onView:saucoConfigView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -32,6 +33,11 @@
         {
           "id": "saucoView",
           "name": "Sauco Explorer"
+        },
+        {
+          "id": "saucoConfigView",
+          "name": "API Configuration",
+          "type": "webview"
         }
       ]
     },
@@ -42,7 +48,8 @@
       },
       {
         "command": "sauco-de.configure",
-        "title": "Sauco: Configure Settings"
+        "title": "Sauco: Configure Settings",
+        "icon": "$(gear)"
       }
     ],
     "configuration": {
@@ -65,7 +72,7 @@
       "view/title": [
         {
           "command": "sauco-de.configure",
-          "when": "view == explorer",
+          "when": "view == saucoView",
           "group": "navigation"
         }
       ],
