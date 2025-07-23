@@ -14,6 +14,7 @@
     "onStartupFinished",
     "onCommand:sauco-de.configure",
     "onCommand:sauco-de.helloWorld",
+    "onCommand:sauco-de.analyzeCode",
     "onView:saucoView",
     "onView:saucoConfigView"
   ],
@@ -50,6 +51,11 @@
         "command": "sauco-de.configure",
         "title": "Sauco: Configure Settings",
         "icon": "$(gear)"
+      },
+      {
+        "command": "sauco-de.analyzeCode",
+        "title": "Sauco: Analyze Code",
+        "icon": "$(beaker)"
       }
     ],
     "configuration": {
@@ -67,11 +73,20 @@
         {
           "command": "sauco-de.configure",
           "group": "navigation"
+        },
+        {
+          "command": "sauco-de.analyzeCode",
+          "group": "navigation"
         }
       ],
       "view/title": [
         {
           "command": "sauco-de.configure",
+          "when": "view == saucoView",
+          "group": "navigation"
+        },
+        {
+          "command": "sauco-de.analyzeCode",
           "when": "view == saucoView",
           "group": "navigation"
         }
@@ -84,6 +99,10 @@
         {
           "command": "sauco-de.helloWorld",
           "title": "Sauco: Hello World"
+        },
+        {
+          "command": "sauco-de.analyzeCode",
+          "title": "Sauco: Analyze Code"
         }
       ]
     }

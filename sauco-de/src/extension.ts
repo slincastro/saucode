@@ -32,6 +32,15 @@ class SaucoTreeDataProvider implements vscode.TreeDataProvider<SaucoItem> {
 						command: 'sauco-de.helloWorld', // For now, using helloWorld command
 						title: 'Open Documentation'
 					}
+				),
+				new SaucoItem(
+					'Analyze Code',
+					'Analyze current code',
+					vscode.TreeItemCollapsibleState.None,
+					{
+						command: 'sauco-de.analyzeCode',
+						title: 'Analyze Code'
+					}
 				)
 			]);
 		}
@@ -373,21 +382,28 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider('saucoConfigView', saucoConfigViewProvider)
 	);
 
-	// Create a status bar item
-	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	statusBarItem.command = 'sauco-de.configure';
-	statusBarItem.text = "$(gear) Sauco Config";
-	statusBarItem.tooltip = "Configure Sauco API URL";
-	statusBarItem.show();
+	// Create a status bar item for configuration
+	const configStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	configStatusBarItem.command = 'sauco-de.configure';
+	configStatusBarItem.text = "$(gear) Sauco Config";
+	configStatusBarItem.tooltip = "Configure Sauco API URL";
+	configStatusBarItem.show();
+	
+	// Create a status bar item for the analyze button
+	const analyzeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 101);
+	analyzeStatusBarItem.command = 'sauco-de.analyzeCode';
+	analyzeStatusBarItem.text = "$(beaker) Analyze";
+	analyzeStatusBarItem.tooltip = "Analyze current code";
+	analyzeStatusBarItem.show();
 	
 	// Update status bar with current URL
 	function updateStatusBar() {
 		const config = vscode.workspace.getConfiguration('sauco-de');
 		const currentUrl = config.get('apiUrl') as string;
 		if (currentUrl) {
-			statusBarItem.tooltip = `Sauco API URL: ${currentUrl}`;
+			configStatusBarItem.tooltip = `Sauco API URL: ${currentUrl}`;
 		} else {
-			statusBarItem.tooltip = "Configure Sauco API URL";
+			configStatusBarItem.tooltip = "Configure Sauco API URL";
 		}
 	}
 	
@@ -420,7 +436,77 @@ export function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand('saucoConfigView.focus');
 	});
 
-	context.subscriptions.push(helloWorldDisposable, configureDisposable, statusBarItem);
+	// Register the analyze code command
+	const analyzeCodeDisposable = vscode.commands.registerCommand('sauco-de.analyzeCode', async () => {
+		// Get the active text editor
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			vscode.window.showErrorMessage('No active editor found. Please open a file to analyze.');
+			return;
+		}
+
+		// Get the text from the editor
+		const code = editor.document.getText();
+		
+		// Get the API URL from configuration
+		const config = vscode.workspace.getConfiguration('sauco-de');
+		const apiUrl = config.get('apiUrl') as string;
+		
+		if (!apiUrl) {
+			vscode.window.showErrorMessage('API URL not configured. Please configure the API URL first.');
+			await vscode.commands.executeCommand('sauco-de.configure');
+			return;
+		}
+
+		// Show progress notification
+		vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Analyzing code...",
+			cancellable: false
+		}, async (progress) => {
+			try {
+				// Prepare the request
+				const analyzeUrl = `${apiUrl}/analyze/`;
+				const requestBody = JSON.stringify({ code });
+				
+				// Log the request for debugging
+				console.log(`Sending request to: ${analyzeUrl}`);
+				
+				// Send the request
+				const response = await fetch(analyzeUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: requestBody
+				});
+				
+				if (!response.ok) {
+					throw new Error(`API request failed with status ${response.status}`);
+				}
+				
+				// Parse the response
+				const result = await response.json() as { message: string };
+				
+				// Show the result
+				vscode.window.showInformationMessage(`Analysis result: ${result.message}`);
+				
+			} catch (error) {
+				console.error('Error analyzing code:', error);
+				vscode.window.showErrorMessage(`Error analyzing code: ${error instanceof Error ? error.message : String(error)}`);
+			}
+			
+			return Promise.resolve();
+		});
+	});
+
+	context.subscriptions.push(
+		helloWorldDisposable, 
+		configureDisposable, 
+		analyzeCodeDisposable, 
+		configStatusBarItem,
+		analyzeStatusBarItem
+	);
 }
 
 // This method is called when your extension is deactivated
