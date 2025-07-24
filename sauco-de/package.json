@@ -16,7 +16,8 @@
     "onCommand:sauco-de.helloWorld",
     "onCommand:sauco-de.analyzeCode",
     "onView:saucoView",
-    "onView:saucoConfigView"
+    "onView:saucoConfigView",
+    "onView:saucoAnalysisView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -38,6 +39,11 @@
         {
           "id": "saucoConfigView",
           "name": "API Configuration",
+          "type": "webview"
+        },
+        {
+          "id": "saucoAnalysisView",
+          "name": "Code Analysis",
           "type": "webview"
         }
       ]

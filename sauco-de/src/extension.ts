@@ -203,6 +203,15 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('saucoConfigView', saucoConfigViewProvider)
 	);
+	
+	// Register the webview view provider for the analysis view
+	const saucoAnalysisViewProvider = new SaucoAnalysisViewProvider(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider('saucoAnalysisView', saucoAnalysisViewProvider)
+	);
+	
+	// Store the analysis view provider in the global scope so it can be accessed from other functions
+	(global as any).saucoAnalysisViewProvider = saucoAnalysisViewProvider;
 
 	// Create a status bar item for configuration
 	const configStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -319,10 +328,10 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				
 				// Parse the response
-				const result = await response.json() as { message: string };
+				const result = await response.json() as { Analisis: string, code: string };
 				
 				// Create a side-by-side comparison view
-				await createSideBySideComparison(editor.document.getText(), result.message);
+				await createSideBySideComparison(editor.document.getText(), result.Analisis, result.code);
 				
 			} catch (error) {
 				console.error('Error analyzing code:', error);
@@ -355,20 +364,143 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 /**
- * Creates a side-by-side comparison view with the original code and analysis result
+ * WebviewViewProvider for the analysis results view in the activity bar
+ */
+class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
+	private _view?: vscode.WebviewView;
+	private _extensionUri: vscode.Uri;
+
+	constructor(private readonly extensionUri: vscode.Uri) {
+		this._extensionUri = extensionUri;
+	}
+
+	public resolveWebviewView(
+		webviewView: vscode.WebviewView,
+		context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken,
+	) {
+		this._view = webviewView;
+
+		webviewView.webview.options = {
+			// Enable JavaScript in the webview
+			enableScripts: true,
+			// Restrict the webview to only load resources from our extension's directory
+			localResourceRoots: [this._extensionUri]
+		};
+
+		// Set initial content
+		webviewView.webview.html = this._getHtmlForWebview('No analysis results yet', '');
+	}
+
+	public updateContent(analysisResult: string, fileName: string) {
+		if (this._view) {
+			this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
+			// Make sure the view is visible
+			this._view.show(true);
+		}
+	}
+
+	private _getHtmlForWebview(analysisResult: string, fileName: string) {
+		const title = fileName ? `Code Analysis for ${fileName}` : 'Code Analysis';
+
+		// Return the HTML content
+		return `<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>${title}</title>
+			<style>
+				body {
+					font-family: var(--vscode-font-family);
+					padding: 10px;
+					color: var(--vscode-foreground);
+					line-height: 1.5;
+				}
+				h1 {
+					font-size: 1.5em;
+					margin-bottom: 15px;
+					color: var(--vscode-editor-foreground);
+					border-bottom: 1px solid var(--vscode-panel-border);
+					padding-bottom: 10px;
+				}
+				h2 {
+					font-size: 1.2em;
+					margin-top: 20px;
+					margin-bottom: 10px;
+					color: var(--vscode-editor-foreground);
+				}
+				pre {
+					background-color: var(--vscode-editor-background);
+					padding: 10px;
+					border-radius: 5px;
+					overflow: auto;
+					font-family: var(--vscode-editor-font-family);
+					font-size: var(--vscode-editor-font-size);
+				}
+				code {
+					font-family: var(--vscode-editor-font-family);
+					font-size: var(--vscode-editor-font-size);
+				}
+				ul, ol {
+					padding-left: 20px;
+				}
+				li {
+					margin-bottom: 5px;
+				}
+			</style>
+		</head>
+		<body>
+			<h1>${title}</h1>
+			<div id="analysis-content">
+				${this._formatAnalysisContent(analysisResult)}
+			</div>
+		</body>
+		</html>`;
+	}
+
+	private _formatAnalysisContent(content: string): string {
+		// Convert markdown-style headers to HTML
+		let formattedContent = content
+			.replace(/^# (.*$)/gm, '<h1>$1</h1>')
+			.replace(/^## (.*$)/gm, '<h2>$1</h2>')
+			.replace(/^### (.*$)/gm, '<h3>$1</h3>')
+			.replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+			.replace(/^##### (.*$)/gm, '<h5>$1</h5>')
+			.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
+		
+		// Convert markdown-style code blocks to HTML
+		formattedContent = formattedContent.replace(/```(?:.*?)\n([\s\S]*?)\n```/g, '<pre><code>$1</code></pre>');
+		
+		// Convert markdown-style inline code to HTML
+		formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+		
+		// Convert markdown-style lists to HTML
+		formattedContent = formattedContent.replace(/^\d+\. (.*$)/gm, '<li>$1</li>').replace(/^- (.*$)/gm, '<li>$1</li>');
+		
+		// Convert line breaks to HTML
+		formattedContent = formattedContent.replace(/\n\n/g, '<br><br>');
+		
+		return formattedContent;
+	}
+}
+
+/**
+ * Creates a side-by-side comparison view with the original code, analysis result, and improved code
  * @param originalCode The original code from the editor
  * @param analysisResult The analysis result from the API
+ * @param improvedCode The improved code from the API
  */
-async function createSideBySideComparison(originalCode: string, analysisResult: string) {
+async function createSideBySideComparison(originalCode: string, analysisResult: string, improvedCode: string) {
 	try {
 		// Get the active editor's filename for reference
 		const activeFileName = vscode.window.activeTextEditor?.document.fileName || 'code';
 		const fileName = path.basename(activeFileName);
 		
-		// Create a new untitled document for the analysis result with a descriptive title
-		const analysisDocument = await vscode.workspace.openTextDocument({
-			content: `# Code Analysis for ${fileName}\n\n${analysisResult}`,
-			language: 'markdown' // Use markdown for better formatting
+		// Create a new untitled document for the improved code
+		const improvedCodeDocument = await vscode.workspace.openTextDocument({
+			content: improvedCode,
+			language: vscode.window.activeTextEditor?.document.languageId || 'plaintext' // Use the same language as the original file
 		});
 
 		// Get the active editor's view column
@@ -380,9 +512,9 @@ async function createSideBySideComparison(originalCode: string, analysisResult: 
 			{ viewColumn: activeColumn, preview: false }
 		);
 		
-		// Show the analysis result in the column beside
+		// Show the improved code in the column beside
 		await vscode.window.showTextDocument(
-			analysisDocument, 
+			improvedCodeDocument, 
 			{ 
 				viewColumn: vscode.ViewColumn.Beside, 
 				preview: false,
@@ -390,9 +522,16 @@ async function createSideBySideComparison(originalCode: string, analysisResult: 
 			}
 		);
 		
+		// Update the analysis view with the analysis result
+		(global as any).saucoAnalysisViewProvider.updateContent(analysisResult, fileName);
+		
+		// Focus on the analysis view
+		await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
+		await vscode.commands.executeCommand('saucoAnalysisView.focus');
+		
 		// Show a success message with instructions
 		vscode.window.showInformationMessage(
-			'Code analysis complete! The analysis is displayed in a side-by-side view.'
+			'Code analysis complete! The improved code is displayed in the side panel and the analysis is in the activity window.'
 		);
 	} catch (error) {
 		console.error('Error creating side-by-side comparison:', error);
