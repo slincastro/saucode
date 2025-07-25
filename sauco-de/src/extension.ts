@@ -38,6 +38,15 @@ class SaucoTreeDataProvider implements vscode.TreeDataProvider<SaucoItem> {
 						command: 'sauco-de.analyzeCode',
 						title: 'Analyze Code'
 					}
+				),
+				new SaucoItem(
+					'Explain Code',
+					'Get explanation of current code',
+					vscode.TreeItemCollapsibleState.None,
+					{
+						command: 'sauco-de.explainCode',
+						title: 'Explain Code'
+					}
 				)
 			]);
 		}
@@ -93,6 +102,12 @@ export function activate(context: vscode.ExtensionContext) {
 	analyzeStatusBarItem.text = "$(beaker) Analyze";
 	analyzeStatusBarItem.tooltip = "Analyze current code";
 	analyzeStatusBarItem.show();
+	
+	const explainStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
+	explainStatusBarItem.command = 'sauco-de.explainCode';
+	explainStatusBarItem.text = "$(book) Explain";
+	explainStatusBarItem.tooltip = "Get explanation of current code";
+	explainStatusBarItem.show();
 	
 	function updateStatusBar() {
 		const config = vscode.workspace.getConfiguration('sauco-de');
@@ -197,12 +212,96 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	const explainCodeDisposable = vscode.commands.registerCommand('sauco-de.explainCode', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			vscode.window.showErrorMessage('No active editor found. Please open a file to explain.');
+			return;
+		}
+
+		const code = editor.document.getText();
+		const config = vscode.workspace.getConfiguration('sauco-de');
+		const apiUrl = config.get('apiUrl') as string;
+		
+		if (!apiUrl) {
+			vscode.window.showErrorMessage('API URL not configured. Please configure the API URL first.');
+			await vscode.commands.executeCommand('sauco-de.configure');
+			return;
+		}
+
+		vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Explaining code...",
+			cancellable: false
+		}, async (progress) => {
+			try {
+				let explainUrl = apiUrl;
+				if (!explainUrl.endsWith('/')) {
+					explainUrl += '/';
+				}
+				explainUrl += 'explain/';
+				
+				const requestBody = JSON.stringify({ code });
+				
+				console.log(`Sending request to: ${explainUrl}`);
+				console.log(`Request body: ${requestBody}`);
+				
+				vscode.window.showInformationMessage(`Sending request to: ${explainUrl}`);
+				
+				const response = await fetch(explainUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: requestBody
+				});
+				
+				if (!response.ok) {
+					const errorText = await response.text().catch(() => 'No error details available');
+					throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+				}
+				
+				const result = await response.json() as { explanation: string, code: string };
+				
+				// Display the explanation in the analysis view
+				(global as any).saucoAnalysisViewProvider.updateContent(result.explanation, 
+					vscode.window.activeTextEditor?.document.fileName ? path.basename(vscode.window.activeTextEditor.document.fileName) : 'code');
+				
+				await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
+				await vscode.commands.executeCommand('saucoAnalysisView.focus');
+				
+				vscode.window.showInformationMessage(
+					'Code explanation complete! The explanation is displayed in the activity window.'
+				);
+				
+			} catch (error) {
+				console.error('Error explaining code:', error);
+				
+				let errorMessage = '';
+				if (error instanceof TypeError && error.message.includes('fetch')) {
+					errorMessage = `Failed to connect to the API server. Please check that:
+					1. The API server is running
+					2. The API URL is correct (${config.get('apiUrl')})
+					3. There are no network issues or firewalls blocking the connection`;
+				} else {
+					errorMessage = `Error explaining code: ${error instanceof Error ? error.message : String(error)}`;
+				}
+				
+				vscode.window.showErrorMessage(errorMessage);
+			}
+			
+			return Promise.resolve();
+		});
+	});
+
 	context.subscriptions.push(
 		helloWorldDisposable, 
 		configureDisposable, 
 		analyzeCodeDisposable, 
+		explainCodeDisposable,
 		configStatusBarItem,
-		analyzeStatusBarItem
+		analyzeStatusBarItem,
+		explainStatusBarItem
 	);
 }
 
