@@ -1,6 +1,32 @@
 import requests
 import json
 
+def test_health_endpoint():
+    """Test the /health endpoint to verify API health status."""
+    url = "http://localhost:8001/health"
+    
+    # Send the request
+    response = requests.get(url)
+    
+    # Print the response status and content
+    print(f"Health Check Status Code: {response.status_code}")
+    
+    if response.status_code == 200:
+        # Get the response data
+        response_data = response.json()
+        
+        # Pretty print the JSON response
+        pretty_json = json.dumps(response_data, indent=2)
+        print(f"Health Check Response:\n{pretty_json}")
+        
+        # Verify the health status
+        if response_data.get("status") == "healthy":
+            print("✅ Health check passed: API is healthy")
+        else:
+            print("❌ Health check failed: API is not reporting as healthy")
+    else:
+        print(f"Error: {response.text}")
+
 def test_analyze_endpoint():
     """Test the /analyze/ endpoint with a sample code snippet."""
     url = "http://localhost:8001/analyze/"
@@ -56,4 +82,10 @@ def fibonacci(n):
         print(f"Error: {response.text}")
 
 if __name__ == "__main__":
+    # Test the health endpoint first
+    print("\n=== Testing Health Endpoint ===\n")
+    test_health_endpoint()
+    
+    # Then test the analyze endpoint
+    print("\n=== Testing Analyze Endpoint ===\n")
     test_analyze_endpoint()

@@ -25,6 +25,18 @@ class CodeAnalysisResponse(BaseModel):
 def read_root():
     return {"message": "¡Hola desde FastAPI!"}
 
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint to verify the API is running correctly.
+    Returns a 200 OK status code with basic health information.
+    """
+    return {
+        "status": "healthy",
+        "api": "sauco-api",
+        "version": "1.0.0"
+    }
+
 @app.post("/analyze/", response_model=CodeAnalysisResponse)
 async def analyze_item(request: Request):
     try:
