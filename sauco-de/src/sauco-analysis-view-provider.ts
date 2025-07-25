@@ -1,4 +1,16 @@
 import * as vscode from 'vscode';
+// Import marked using a workaround for ESM/CommonJS compatibility
+let marked: any;
+try {
+    // Try to import as ESM
+    import('marked').then(m => {
+        marked = m.marked || m.defaults || m;
+    }).catch(e => {
+        console.error('Error importing marked as ESM:', e);
+    });
+} catch (error) {
+    console.error('Error setting up marked import:', error);
+}
 
 export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
@@ -46,36 +58,26 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 					color: var(--vscode-foreground);
 					line-height: 1.5;
 				}
-				h1 {
-					font-size: 1.5em;
-					margin-bottom: 15px;
-					color: var(--vscode-editor-foreground);
-					border-bottom: 1px solid var(--vscode-panel-border);
-					padding-bottom: 10px;
-				}
-				h2 {
-					font-size: 1.2em;
-					margin-top: 20px;
-					margin-bottom: 10px;
+				h1, h2, h3, h4, h5, h6 {
 					color: var(--vscode-editor-foreground);
 				}
 				pre {
 					background-color: var(--vscode-editor-background);
 					padding: 10px;
 					border-radius: 5px;
-					overflow: auto;
+					overflow-x: auto;
 					font-family: var(--vscode-editor-font-family);
 					font-size: var(--vscode-editor-font-size);
 				}
 				code {
+					background-color: var(--vscode-editor-background);
+					padding: 2px 4px;
+					border-radius: 3px;
 					font-family: var(--vscode-editor-font-family);
 					font-size: var(--vscode-editor-font-size);
 				}
 				ul, ol {
 					padding-left: 20px;
-				}
-				li {
-					margin-bottom: 5px;
 				}
 			</style>
 		</head>
@@ -88,28 +90,61 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		</html>`;
 	}
 
-	private _formatAnalysisContent(content: string): string {
-		// Convert markdown-style headers to HTML
-		let formattedContent = content
+	private async _getMarkedHtml(content: string): Promise<string> {
+		try {
+			// Dynamically import marked
+			const markedModule = await import('marked');
+			// Use the parse function
+			return markedModule.parse(content);
+		} catch (error) {
+			console.error('Error parsing markdown with marked:', error);
+			// Fallback to basic parsing if marked fails
+			return this._basicMarkdownParse(content);
+		}
+	}
+
+	private _basicMarkdownParse(content: string): string {
+		// Simple HTML escaping for safety
+		const escaped = content
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+		
+		// Convert markdown-like syntax to HTML
+		return escaped
+			.replace(/\n\n/g, '<br><br>')
+			.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+			.replace(/\*(.*?)\*/g, '<em>$1</em>')
+			.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+			.replace(/`([^`]+)`/g, '<code>$1</code>')
+			// Handle headers with numbers (e.g., "#### 1. Title")
+			.replace(/^#{1,6}\s+(\d+\.\s+)?(.+)$/gm, (match, p1, p2, offset, string) => {
+				const level = match.trim().indexOf(' ');
+				const number = p1 ? p1 : '';
+				return `<h${level}>${number}${p2}</h${level}>`;
+			})
+			// Fallback for standard headers
 			.replace(/^# (.*$)/gm, '<h1>$1</h1>')
 			.replace(/^## (.*$)/gm, '<h2>$1</h2>')
 			.replace(/^### (.*$)/gm, '<h3>$1</h3>')
 			.replace(/^#### (.*$)/gm, '<h4>$1</h4>')
 			.replace(/^##### (.*$)/gm, '<h5>$1</h5>')
 			.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
+	}
+	
+	private _formatAnalysisContent(content: string): string {
+		// Try to use marked if available, otherwise fall back to basic parser
+		try {
+			if (marked && typeof marked.parse === 'function') {
+				return marked.parse(content);
+			}
+		} catch (error) {
+			console.error('Error using marked:', error);
+		}
 		
-		// Convert markdown-style code blocks to HTML
-		formattedContent = formattedContent.replace(/```(?:.*?)\n([\s\S]*?)\n```/g, '<pre><code>$1</code></pre>');
-		
-		// Convert markdown-style inline code to HTML
-		formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
-		
-		// Convert markdown-style lists to HTML
-		formattedContent = formattedContent.replace(/^\d+\. (.*$)/gm, '<li>$1</li>').replace(/^- (.*$)/gm, '<li>$1</li>');
-		
-		// Convert line breaks to HTML
-		formattedContent = formattedContent.replace(/\n\n/g, '<br><br>');
-		
-		return formattedContent;
+		// Fallback to basic parser
+		return this._basicMarkdownParse(content);
 	}
 }
