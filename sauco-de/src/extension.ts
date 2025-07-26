@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { SaucoConfigViewProvider } from './sauco-config-view-provider';
 import { SaucoAnalysisViewProvider } from './sauco-analysis-view-provider';
+import { CognitiveComplexityMetric } from './metrics/CognitiveComplexityMetric';
+import { Metric, MetricResult } from './metrics/Metric';
 
 
 class SaucoTreeDataProvider implements vscode.TreeDataProvider<SaucoItem> {
@@ -90,6 +92,27 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	
 	(global as any).saucoAnalysisViewProvider = saucoAnalysisViewProvider;
+	
+	// Register metrics
+	const metrics: Metric[] = [CognitiveComplexityMetric];
+	
+	// Add event listener for when a text document is opened
+	context.subscriptions.push(
+		vscode.window.onDidChangeActiveTextEditor((editor) => {
+			if (editor) {
+				calculateAndDisplayMetrics(editor.document, metrics, saucoAnalysisViewProvider);
+			}
+		})
+	);
+	
+	// Calculate metrics for the currently open document (if any)
+	if (vscode.window.activeTextEditor) {
+		calculateAndDisplayMetrics(
+			vscode.window.activeTextEditor.document, 
+			metrics, 
+			saucoAnalysisViewProvider
+		);
+	}
 
 	const configStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	configStatusBarItem.command = 'sauco-de.configure';
@@ -351,6 +374,79 @@ async function createSideBySideComparison(originalCode: string, analysisResult: 
 		console.error('Error creating side-by-side comparison:', error);
 		vscode.window.showErrorMessage(`Error creating side-by-side comparison: ${error instanceof Error ? error.message : String(error)}`);
 	}
+}
+
+/**
+ * Calculates metrics for a document and displays them in the analysis view
+ * @param document The document to calculate metrics for
+ * @param metrics The metrics to calculate
+ * @param analysisViewProvider The analysis view provider to update
+ */
+function calculateAndDisplayMetrics(
+	document: vscode.TextDocument, 
+	metrics: Metric[], 
+	analysisViewProvider: SaucoAnalysisViewProvider
+) {
+	try {
+		const fileName = path.basename(document.fileName);
+		const metricResults: { metric: Metric, result: MetricResult }[] = [];
+		
+		// Calculate each metric
+		for (const metric of metrics) {
+			try {
+				const result = metric.extract(document);
+				metricResults.push({ metric, result });
+			} catch (error) {
+				console.error(`Error calculating metric ${metric.name}:`, error);
+			}
+		}
+		
+		// Generate HTML table for metrics
+		const metricsTable = generateMetricsTable(metricResults);
+		
+		// Update the analysis view with the metrics table
+		analysisViewProvider.updateMetricsContent(metricsTable, fileName);
+	} catch (error) {
+		console.error('Error calculating metrics:', error);
+	}
+}
+
+/**
+ * Generates an HTML table for displaying metrics
+ * @param metricResults The metric results to display
+ * @returns HTML string for the metrics table
+ */
+function generateMetricsTable(metricResults: { metric: Metric, result: MetricResult }[]): string {
+	if (metricResults.length === 0) {
+		return '<p>No metrics available for this file.</p>';
+	}
+	
+	let tableHtml = `
+		<table class="metrics-table">
+			<thead>
+				<tr>
+					<th>Metric</th>
+					<th>Value</th>
+				</tr>
+			</thead>
+			<tbody>
+	`;
+	
+	for (const { metric, result } of metricResults) {
+		tableHtml += `
+			<tr>
+				<td>${result.label}</td>
+				<td>${result.value}</td>
+			</tr>
+		`;
+	}
+	
+	tableHtml += `
+			</tbody>
+		</table>
+	`;
+	
+	return tableHtml;
 }
 
 export function deactivate() {}

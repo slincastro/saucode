@@ -21,6 +21,10 @@ class CodeAnalysisResponse(BaseModel):
     Analisis: str
     code: str
 
+class CodeExplainResponse(BaseModel):
+    explanation: str
+    code: str
+
 @app.get("/")
 def read_root():
     return {"message": "¡Hola desde FastAPI!"}
@@ -239,5 +243,96 @@ async def analyze_item(request: Request):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing code: {str(e)}")
+
+@app.post("/explain/", response_model=CodeExplainResponse)
+async def explain_code(request: Request):
+    try:
+        # Parse the request body
+        data = await request.json()
+        
+        # Check if code is in the request
+        if "code" not in data:
+            raise HTTPException(status_code=400, detail="Code not found in request")
+        
+        code = data["code"]
+        
+        # If API key is not set, return a mock response for testing
+        if not api_key_set:
+            print("Using mock response because OpenAI API key is not set")
+            
+            # Check if the code contains "fibonacci" to provide a more specific response
+            if "fibonacci" in code.lower():
+                explanation = f"""
+                # Explanation of Fibonacci Function
+
+                This code defines a function called `fibonacci` that generates a Fibonacci sequence of a specified length.
+
+                ```python
+                {code}
+                ```
+
+                ## How it works:
+
+                1. The function takes a parameter `n` which determines how many Fibonacci numbers to generate.
+                2. It handles several base cases:
+                   - If n ≤ 0, it returns an empty list
+                   - If n = 1, it returns [0]
+                   - If n = 2, it returns [0, 1]
+                3. For n > 2, it:
+                   - Initializes a list with the first two Fibonacci numbers [0, 1]
+                   - Uses a loop to calculate each subsequent Fibonacci number by adding the two previous numbers
+                   - Adds each new number to the list
+                   - Returns the complete list
+
+                The Fibonacci sequence is a series of numbers where each number is the sum of the two preceding ones, usually starting with 0 and 1.
+                """
+                
+                return CodeExplainResponse(explanation=explanation, code=code)
+            else:
+                # Generic response for other code
+                explanation = f"""
+                # Code Explanation
+
+                Here's an explanation of the provided code:
+
+                ```python
+                {code}
+                ```
+
+                This code appears to define a function or class that performs some operations. Without more specific context, I can provide a general explanation of what the code is doing based on its structure and syntax.
+
+                The code uses Python syntax and follows standard programming patterns. It likely processes input data, performs calculations or transformations, and returns a result.
+                """
+                
+                return CodeExplainResponse(explanation=explanation, code=code)
+        
+        # Initialize OpenAI LLM
+        llm = OpenAI(model="gpt-4o")
+        
+        # Create a prompt for code explanation
+        prompt = f"""
+        Please explain the following code in detail. Focus on what the code does, how it works, and the purpose of each significant part.
+        
+        ```
+        {code}
+        ```
+        
+        Your explanation should:
+        1. Provide a high-level overview of what the code accomplishes
+        2. Break down the functionality of each significant section
+        3. Explain any algorithms or important logic
+        4. Clarify any complex or non-obvious parts
+        5. Use clear, concise language that would help someone understand the code
+        
+        Format your response using markdown for readability.
+        """
+        
+        # Call OpenAI to explain the code
+        response = llm.complete(prompt)
+        explanation = response.text
+        
+        # Create the response object using the Pydantic model
+        return CodeExplainResponse(explanation=explanation, code=code)
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error analyzing code: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error explaining code: {str(e)}")

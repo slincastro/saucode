@@ -18,6 +18,7 @@ class SaucoAnalysisViewProvider {
     extensionUri;
     _view;
     _extensionUri;
+    _metricsContent = '';
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
         this._extensionUri = extensionUri;
@@ -33,6 +34,13 @@ class SaucoAnalysisViewProvider {
     updateContent(analysisResult, fileName) {
         if (this._view) {
             this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
+            this._view.show(true);
+        }
+    }
+    updateMetricsContent(metricsTable, fileName) {
+        this._metricsContent = metricsTable;
+        if (this._view) {
+            this._view.webview.html = this._getHtmlForWebview('', fileName);
             this._view.show(true);
         }
     }
@@ -72,13 +80,38 @@ class SaucoAnalysisViewProvider {
 				ul, ol {
 					padding-left: 20px;
 				}
+				.metrics-table {
+					width: 100%;
+					border-collapse: collapse;
+					margin: 20px 0;
+				}
+				.metrics-table th, .metrics-table td {
+					border: 1px solid var(--vscode-panel-border);
+					padding: 8px 12px;
+					text-align: left;
+				}
+				.metrics-table th {
+					background-color: var(--vscode-editor-background);
+					font-weight: bold;
+				}
+				.metrics-table tr:nth-child(even) {
+					background-color: var(--vscode-list-hoverBackground);
+				}
 			</style>
 		</head>
 		<body>
 			<h1>${title}</h1>
+			${this._metricsContent ? `
+			<div id="metrics-content">
+				<h2>Code Metrics</h2>
+				${this._metricsContent}
+			</div>
+			` : ''}
+			${analysisResult ? `
 			<div id="analysis-content">
 				${this._formatAnalysisContent(analysisResult)}
 			</div>
+			` : ''}
 		</body>
 		</html>`;
     }
