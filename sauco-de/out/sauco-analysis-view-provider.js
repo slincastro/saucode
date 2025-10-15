@@ -56,7 +56,7 @@ class SaucoAnalysisViewProvider {
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>${title}</title>
+			
 			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 			<style>
 				body {
@@ -111,7 +111,6 @@ class SaucoAnalysisViewProvider {
 			</style>
 		</head>
 		<body>
-			<h1>${title}</h1>
 			${hasMetricsData ? `
 			<div id="metrics-chart-container">
 				<h2>Metrics Comparison</h2>
@@ -176,12 +175,7 @@ class SaucoAnalysisViewProvider {
 				</script>
 			</div>
 			` : ''}
-			${this._metricsContent ? `
-			<div id="metrics-content">
-				<h2>Code Metrics</h2>
-				${this._metricsContent}
-			</div>
-			` : ''}
+			
 			${analysisResult ? `
 			<div id="analysis-content">
 				${this._formatAnalysisContent(analysisResult)}
