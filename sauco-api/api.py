@@ -25,7 +25,7 @@ QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "code_knowledge")
 TFIDF_VECTORIZER_PATH = os.getenv("TFIDF_VECTORIZER_PATH")  # ej: ./vectorizer.pkl
 
 # Carga vectorizer si está configurado
-_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=True)
+_vectorizer = None
 if TFIDF_VECTORIZER_PATH and os.path.exists(TFIDF_VECTORIZER_PATH):
     with open(TFIDF_VECTORIZER_PATH, "rb") as f:
         _vectorizer = pickle.load(f)
