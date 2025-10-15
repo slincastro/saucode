@@ -19,6 +19,7 @@ class SaucoAnalysisViewProvider {
     _view;
     _extensionUri;
     _metricsContent = '';
+    _metricsData;
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
         this._extensionUri = extensionUri;
@@ -31,7 +32,10 @@ class SaucoAnalysisViewProvider {
         };
         webviewView.webview.html = this._getHtmlForWebview('No analysis results yet', '');
     }
-    updateContent(analysisResult, fileName) {
+    updateContent(analysisResult, fileName, metricsData) {
+        if (metricsData) {
+            this._metricsData = metricsData;
+        }
         if (this._view) {
             this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
             this._view.show(true);
@@ -46,12 +50,14 @@ class SaucoAnalysisViewProvider {
     }
     _getHtmlForWebview(analysisResult, fileName) {
         const title = fileName ? `Code Analysis for ${fileName}` : 'Code Analysis';
+        const hasMetricsData = this._metricsData !== undefined;
         return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<title>${title}</title>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 			<style>
 				body {
 					font-family: var(--vscode-font-family);
@@ -97,10 +103,79 @@ class SaucoAnalysisViewProvider {
 				.metrics-table tr:nth-child(even) {
 					background-color: var(--vscode-list-hoverBackground);
 				}
+				.chart-container {
+					width: 100%;
+					height: 300px;
+					margin: 20px 0;
+				}
 			</style>
 		</head>
 		<body>
 			<h1>${title}</h1>
+			${hasMetricsData ? `
+			<div id="metrics-chart-container">
+				<h2>Metrics Comparison</h2>
+				<div class="chart-container">
+					<canvas id="metricsChart"></canvas>
+				</div>
+				<script>
+					document.addEventListener('DOMContentLoaded', function() {
+						const metricsData = ${JSON.stringify(this._metricsData)};
+						const ctx = document.getElementById('metricsChart').getContext('2d');
+						
+						// Create labels and datasets
+						const labels = ['Methods', 'If Statements', 'Loops', 'Cyclomatic Complexity', 'Avg Method Size'];
+						const beforeData = [
+							metricsData.before.method_number,
+							metricsData.before.number_of_ifs,
+							metricsData.before.number_of_loops,
+							metricsData.before.cyclomatic_complexity,
+							metricsData.before.average_method_size
+						];
+						const afterData = [
+							metricsData.after.method_number,
+							metricsData.after.number_of_ifs,
+							metricsData.after.number_of_loops,
+							metricsData.after.cyclomatic_complexity,
+							metricsData.after.average_method_size
+						];
+						
+						// Create the chart
+						const chart = new Chart(ctx, {
+							type: 'bar',
+							data: {
+								labels: labels,
+								datasets: [
+									{
+										label: 'Before',
+										data: beforeData,
+										backgroundColor: 'rgba(255, 99, 132, 0.5)',
+										borderColor: 'rgba(255, 99, 132, 1)',
+										borderWidth: 1
+									},
+									{
+										label: 'After',
+										data: afterData,
+										backgroundColor: 'rgba(54, 162, 235, 0.5)',
+										borderColor: 'rgba(54, 162, 235, 1)',
+										borderWidth: 1
+									}
+								]
+							},
+							options: {
+								responsive: true,
+								maintainAspectRatio: false,
+								scales: {
+									y: {
+										beginAtZero: true
+									}
+								}
+							}
+						});
+					});
+				</script>
+			</div>
+			` : ''}
 			${this._metricsContent ? `
 			<div id="metrics-content">
 				<h2>Code Metrics</h2>

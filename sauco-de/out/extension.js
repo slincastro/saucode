@@ -228,7 +228,7 @@ function activate(context) {
                 }
                 // Combine the analysis with context and metrics
                 const fullAnalysis = result.Analisis + contextDisplay + metricsDisplay;
-                await createSideBySideComparison(editor.document.getText(), fullAnalysis, result.Code);
+                await createSideBySideComparison(editor.document.getText(), fullAnalysis, result.Code, result.metrics);
             }
             catch (error) {
                 console.error('Error analyzing code:', error);
@@ -324,8 +324,9 @@ function activate(context) {
  * @param originalCode The original code from the editor
  * @param analysisResult The analysis result from the API
  * @param improvedCode The improved code from the API
+ * @param metricsData The metrics data from the API
  */
-async function createSideBySideComparison(originalCode, analysisResult, improvedCode) {
+async function createSideBySideComparison(originalCode, analysisResult, improvedCode, metricsData) {
     try {
         const activeFileName = vscode.window.activeTextEditor?.document.fileName || 'code';
         const fileName = path.basename(activeFileName);
@@ -340,7 +341,7 @@ async function createSideBySideComparison(originalCode, analysisResult, improved
             preview: false,
             preserveFocus: false
         });
-        global.saucoAnalysisViewProvider.updateContent(analysisResult, fileName);
+        global.saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData);
         await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
         await vscode.commands.executeCommand('saucoAnalysisView.focus');
         vscode.window.showInformationMessage('Code analysis complete! The improved code is displayed in the side panel and the analysis is in the activity window.');

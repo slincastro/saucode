@@ -22,6 +22,8 @@ A Visual Studio Code extension for Sauco that provides configuration options for
 3. Enter your API URL in the configuration panel
 4. Click "Save Configuration" to save your settings
 
+npm run compile 
+
 ## Extension Settings
 
 This extension contributes the following settings:
