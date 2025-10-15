@@ -130,7 +130,7 @@ class ImprovementService:
             Format your response with clear section headers (e.g., "## Purpose", "## Public API", etc.) 
             so I can parse each section separately. Each section should be self-contained and meaningful on its own.
             
-            Return plain text (no markdown fences).
+            Return plain text (no markdown fences)
 
             CODE:
             {code}
@@ -281,22 +281,22 @@ class ImprovementService:
             Use the retrieved context if relevant:
             {retrieved or "(no context)"}
 
-            Return the improved code in a single fenced block:
-            
-            <code>
+            IMPORTANT: Return ONLY the improved code with no markdown fences, no ```python markers, 
+            and no explanations. Just the raw code itself.
             """
         resp = self.client.chat.completions.create(
-        model=self.model,
-        temperature=0.0,
-        
-        messages=[
-        {"role": "system", "content": "Return only the improved code block; no explanations unless asked."},
-        {"role": "user", "content": prompt}
-        ]
+            model=self.model,
+            temperature=0.0,
+            messages=[
+                {"role": "system", "content": "Return only the raw improved code; no code block markers, no explanations."},
+                {"role": "user", "content": prompt}
+            ]
         )
 
         text = resp.choices[0].message.content or ""
-        m = re.search(r"(?:improved)?\s*(.*?)", text, flags=re.S)
-        #print("#"*40)
-        #print(text)
-        return text #m.group(1).strip() if m else text.strip()
+        
+        # Remove any markdown code block markers if they exist
+        cleaned_code = re.sub(r'^```\w*\s*', '', text)
+        cleaned_code = re.sub(r'```$', '', cleaned_code)
+        
+        return cleaned_code.strip()
