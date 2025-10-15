@@ -178,7 +178,9 @@ def fibonacci(n):
                 print("\n--- Metrics ---")
                 metrics = response_data["metrics"]
                 print(f"Before improvement - Method count: {metrics['before']['method_number']}")
+                print(f"Before improvement - If count: {metrics['before']['number_of_ifs']}")
                 print(f"After improvement - Method count: {metrics['after']['method_number']}")
+                print(f"After improvement - If count: {metrics['after']['number_of_ifs']}")
             
             # Pretty print the JSON response
             pretty_json = json.dumps(response_data, indent=2)

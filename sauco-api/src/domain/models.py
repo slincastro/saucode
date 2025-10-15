@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Any
 
 class Metrics(BaseModel):
     method_number: int = Field(0, description="Number of methods/functions in the code")
+    number_of_ifs: int = Field(0, description="Number of if statements in the code")
 
 class MetricsResponse(BaseModel):
     before: Metrics = Field(Metrics(), description="Metrics before code improvement")

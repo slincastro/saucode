@@ -85,8 +85,14 @@ class ImprovementService:
         
         # Create metrics response
         metrics_response = MetricsResponse(
-            before=Metrics(method_number=before_metrics["method_number"]),
-            after=Metrics(method_number=after_metrics["method_number"])
+            before=Metrics(
+                method_number=before_metrics["method_number"],
+                number_of_ifs=before_metrics["number_of_ifs"]
+            ),
+            after=Metrics(
+                method_number=after_metrics["method_number"],
+                number_of_ifs=after_metrics["number_of_ifs"]
+            )
         )
 
         #print("-- Improve Code"*30)

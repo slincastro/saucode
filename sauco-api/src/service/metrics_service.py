@@ -44,6 +44,48 @@ def count_methods(code: str) -> int:
             
         return method_count
 
+def count_ifs(code: str) -> int:
+    """
+    Count the number of if statements in a given code snippet.
+    
+    Args:
+        code (str): The code snippet to analyze
+        
+    Returns:
+        int: The number of if statements found in the code
+    """
+    try:
+        # Try to parse the code as Python
+        tree = ast.parse(code)
+        if_count = 0
+        
+        # Count if statements
+        for node in ast.walk(tree):
+            if isinstance(node, ast.If):
+                if_count += 1
+                
+        return if_count
+    except SyntaxError:
+        # If the code is not valid Python, use regex as a fallback
+        # This is less accurate but can work for other languages
+        
+        # Pattern for common if statements in various languages
+        # This covers Python, JavaScript, Java, C#, C++, etc.
+        patterns = [
+            # if statement with condition
+            r'if\s*\(',
+            r'if\s+[^(]',  # Python style if without parentheses
+            # else if, elif variations
+            r'else\s+if\s*\(',
+            r'elif\s+'
+        ]
+        
+        if_count = 0
+        for pattern in patterns:
+            if_count += len(re.findall(pattern, code))
+            
+        return if_count
+
 def calculate_metrics(code: str) -> Dict[str, Any]:
     """
     Calculate various metrics for a given code snippet.
@@ -58,6 +100,9 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     
     # Count methods
     metrics["method_number"] = count_methods(code)
+    
+    # Count if statements
+    metrics["number_of_ifs"] = count_ifs(code)
     
     # Additional metrics can be added here in the future
     
