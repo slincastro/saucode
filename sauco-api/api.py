@@ -45,7 +45,7 @@ _service = ImprovementService(
 @app.post("/improve", response_model=ImproveResponse)
 async def improve(req: ImproveRequest):
     try:
-        analysis, improved_code, chunk_details = await _service.run_workflow(req.Code)
+        analysis, improved_code, chunk_details, metrics = await _service.run_workflow(req.Code)
         
         retrieved_context = [
             {
@@ -60,7 +60,8 @@ async def improve(req: ImproveRequest):
         return ImproveResponse(
             Analisis=analysis, 
             Code=improved_code,
-            RetrievedContext=retrieved_context
+            RetrievedContext=retrieved_context,
+            metrics=metrics
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,6 +1,6 @@
 # /src/service/improvement_service.py
 from __future__ import annotations
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Dict, Any
 import re
 import os
 
@@ -8,6 +8,9 @@ from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import NamedSparseVector, SparseVector
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from src.service.metrics_service import calculate_metrics
+from src.domain.models import Metrics, MetricsResponse
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55,17 +58,21 @@ class ImprovementService:
         self.vectorizer = vectorizer
 
     # -------------------- Public API --------------------
-    async def run_workflow(self, code: str) -> Tuple[str, str, List[Dict]]:
+    async def run_workflow(self, code: str) -> Tuple[str, str, List[Dict], MetricsResponse]:
         """
         1) Describe y analiza el código (variables, métodos, bucles, responsabilidades)
         2) Usa esa descripción como query TF-IDF en Qdrant para recuperar contexto (chunks)
         3) Pide recomendaciones a OpenAI
         4) Pide código mejorado a OpenAI
-        Returns: (analysis_text, improved_code, retrieved_context_details)
+        5) Calculate metrics before and after code improvement
+        Returns: (analysis_text, improved_code, retrieved_context_details, metrics)
         """
 
         print("starting workflow")
 
+        # Calculate metrics before code improvement
+        before_metrics = calculate_metrics(code)
+        
         analysis_list = await self._describe_code(code)
         # Join the analysis list for display purposes
         analysis = "\n\n".join(analysis_list)
@@ -73,11 +80,20 @@ class ImprovementService:
         recommendations = await self._recommendations(code, analysis, retrieved_text)
         improved_code = await self._refactor_code(code, recommendations, retrieved_text)
 
+        # Calculate metrics after code improvement
+        after_metrics = calculate_metrics(improved_code)
+        
+        # Create metrics response
+        metrics_response = MetricsResponse(
+            before=Metrics(method_number=before_metrics["method_number"]),
+            after=Metrics(method_number=after_metrics["method_number"])
+        )
+
         #print("-- Improve Code"*30)
         #print(improved_code)
         #print("--"*30)
 
-        return analysis, improved_code, chunk_details
+        return analysis, improved_code, chunk_details, metrics_response
 
     # -------------------- Steps --------------------
     async def _describe_code(self, code: str) -> List[str]:

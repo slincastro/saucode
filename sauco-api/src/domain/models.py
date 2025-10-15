@@ -2,6 +2,13 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 
+class Metrics(BaseModel):
+    method_number: int = Field(0, description="Number of methods/functions in the code")
+
+class MetricsResponse(BaseModel):
+    before: Metrics = Field(Metrics(), description="Metrics before code improvement")
+    after: Metrics = Field(Metrics(), description="Metrics after code improvement")
+
 class ImproveRequest(BaseModel):
     Code: str = Field(..., description="Código fuente a analizar y mejorar")
 
@@ -21,3 +28,4 @@ class ImproveResponse(BaseModel):
     Analisis: str
     Code: str
     RetrievedContext: List[ChunkDetail] = []
+    metrics: Optional[MetricsResponse] = None

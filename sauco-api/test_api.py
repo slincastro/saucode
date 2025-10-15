@@ -172,6 +172,14 @@ def fibonacci(n):
         if "Analisis" in response_data and "Code" in response_data and "RetrievedContext" in response_data:
             print("Response has the correct structure with 'Analisis', 'Code', and 'RetrievedContext' fields.")
             
+            # Check if metrics are included in the response
+            if "metrics" in response_data:
+                print("Response includes metrics data.")
+                print("\n--- Metrics ---")
+                metrics = response_data["metrics"]
+                print(f"Before improvement - Method count: {metrics['before']['method_number']}")
+                print(f"After improvement - Method count: {metrics['after']['method_number']}")
+            
             # Pretty print the JSON response
             pretty_json = json.dumps(response_data, indent=2)
             print(f"Response:\n{pretty_json}")
