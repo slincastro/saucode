@@ -7,6 +7,8 @@ import os
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import NamedSparseVector, SparseVector
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper: TF-IDF sparse search in Qdrant
@@ -160,6 +162,7 @@ class ImprovementService:
             - A list of dictionaries with chunk details (score, page, chunk_id, text)
         """
         print("Retrieving Context...")
+        print(f"configuration : {self.qdrant} - {self.collection} - {self.vectorizer} ")
 
         if not self.qdrant or not self.collection or not self.vectorizer:
             return "", []
@@ -168,7 +171,9 @@ class ImprovementService:
         chunk_details: List[Dict] = []
         
         queries = query_text if isinstance(query_text, list) else [query_text]
-        
+        print(f"searching data.. {queries}")
+
+
         for query in queries:
             results = search_tfidf(
                 client=self.qdrant,

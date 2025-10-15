@@ -7,7 +7,8 @@ import pickle
 
 from qdrant_client import QdrantClient
 from src.service.improvement_service import ImprovementService
-from src.domain.models import ImproveRequest, ImproveResponse
+from src.domain.models import ImproveRequest, ImproveResponse, RetrieveContextRequest, RetrieveContextResponse
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # --------- App ----------
 app = FastAPI(title="Code Improver API", version="1.0.0")
@@ -24,7 +25,7 @@ QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "code_knowledge")
 TFIDF_VECTORIZER_PATH = os.getenv("TFIDF_VECTORIZER_PATH")  # ej: ./vectorizer.pkl
 
 # Carga vectorizer si está configurado
-_vectorizer = None
+_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=True)
 if TFIDF_VECTORIZER_PATH and os.path.exists(TFIDF_VECTORIZER_PATH):
     with open(TFIDF_VECTORIZER_PATH, "rb") as f:
         _vectorizer = pickle.load(f)
@@ -59,6 +60,29 @@ async def improve(req: ImproveRequest):
         return ImproveResponse(
             Analisis=analysis, 
             Code=improved_code,
+            RetrievedContext=retrieved_context
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/retrieve_context", response_model=RetrieveContextResponse)
+async def retrieve_context(req: RetrieveContextRequest):
+    try:
+        # Call the _retrieve_context method from the service
+        _, chunk_details = _service._retrieve_context(req.Query)
+        
+        # Format the response
+        retrieved_context = [
+            {
+                "score": chunk.get("score", 0.0),
+                "page": chunk.get("page"),
+                "chunk_id": chunk.get("chunk_id"),
+                "text": chunk.get("text", "")
+            }
+            for chunk in chunk_details
+        ]
+        
+        return RetrieveContextResponse(
             RetrievedContext=retrieved_context
         )
     except Exception as e:

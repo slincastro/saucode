@@ -197,6 +197,49 @@ def fibonacci(n):
     else:
         print(f"Error: {response.text}")
 
+def test_retrieve_context_endpoint():
+    """Test the /retrieve_context endpoint with a sample query."""
+    url = "http://localhost:8001/retrieve_context"
+    
+    # Sample query to retrieve context
+    query = "Python best practices for error handling and exception management"
+    
+    # Prepare the request payload
+    payload = {"Query": query}
+    
+    # Send the request
+    response = requests.post(url, json=payload)
+    
+    # Print the response status and content
+    print(f"Status Code: {response.status_code}")
+    
+    if response.status_code == 200:
+        # Get the response data
+        response_data = response.json()
+        
+        # Check if the response has the expected structure
+        if "RetrievedContext" in response_data:
+            print("Response has the correct structure with 'RetrievedContext' field.")
+            
+            # Pretty print the JSON response
+            pretty_json = json.dumps(response_data, indent=2)
+            print(f"Response:\n{pretty_json}")
+            
+            # Print the retrieved context separately for clarity
+            print("\n--- Retrieved Context ---")
+            for i, chunk in enumerate(response_data["RetrievedContext"]):
+                print(f"\nChunk {i+1}:")
+                print(f"Score: {chunk['score']}")
+                print(f"Page: {chunk['page']}")
+                print(f"Chunk ID: {chunk['chunk_id']}")
+                print(f"Text: {chunk['text'][:100]}...")  # Print first 100 chars of text
+        else:
+            print("Warning: Response does not have the expected structure.")
+            pretty_json = json.dumps(response_data, indent=2)
+            print(f"Actual Response:\n{pretty_json}")
+    else:
+        print(f"Error: {response.text}")
+
 if __name__ == "__main__":
     # Test the health endpoint first
     print("\n=== Testing Health Endpoint ===\n")
@@ -210,6 +253,10 @@ if __name__ == "__main__":
     print("\n=== Testing Explain Endpoint ===\n")
     test_explain_endpoint()
     
-    # Finally test the improve endpoint
+    # Test the improve endpoint
     print("\n=== Testing Improve Endpoint ===\n")
     test_improve_endpoint()
+    
+    # Test the retrieve_context endpoint
+    print("\n=== Testing Retrieve Context Endpoint ===\n")
+    test_retrieve_context_endpoint()
