@@ -454,7 +454,8 @@ async function createSideBySideComparison(
 			{ viewColumn: activeColumn, preview: false }
 		);
 		
-		await vscode.window.showTextDocument(
+		// Show the improved code document and store the editor reference
+		const improvedCodeEditor = await vscode.window.showTextDocument(
 			improvedCodeDocument, 
 			{ 
 				viewColumn: vscode.ViewColumn.Beside, 
@@ -462,6 +463,9 @@ async function createSideBySideComparison(
 				preserveFocus: false
 			}
 		);
+		
+		// Store the improved code editor for later use when closing it
+		(global as any).saucoAnalysisViewProvider.setImprovedCodeEditor(improvedCodeEditor);
 		
 		// Pass the improved code to the analysis view provider
 		(global as any).saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData, improvedCode);

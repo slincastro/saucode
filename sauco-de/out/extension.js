@@ -340,11 +340,14 @@ async function createSideBySideComparison(originalCode, analysisResult, improved
             global.saucoAnalysisViewProvider.setOriginalEditor(vscode.window.activeTextEditor);
         }
         await vscode.window.showTextDocument(vscode.window.activeTextEditor.document, { viewColumn: activeColumn, preview: false });
-        await vscode.window.showTextDocument(improvedCodeDocument, {
+        // Show the improved code document and store the editor reference
+        const improvedCodeEditor = await vscode.window.showTextDocument(improvedCodeDocument, {
             viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: false
         });
+        // Store the improved code editor for later use when closing it
+        global.saucoAnalysisViewProvider.setImprovedCodeEditor(improvedCodeEditor);
         // Pass the improved code to the analysis view provider
         global.saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData, improvedCode);
         await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');

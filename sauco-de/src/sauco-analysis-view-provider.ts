@@ -37,6 +37,7 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 	private _metricsData?: MetricsData;
 	private _improvedCode: string = '';
 	private _originalEditor?: vscode.TextEditor;
+	private _improvedCodeEditor?: vscode.TextEditor;
 
 	constructor(private readonly extensionUri: vscode.Uri) {
 		this._extensionUri = extensionUri;
@@ -83,6 +84,10 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		this._originalEditor = editor;
 	}
 
+	public setImprovedCodeEditor(editor: vscode.TextEditor) {
+		this._improvedCodeEditor = editor;
+	}
+
 	private _applyImprovedCode() {
 		if (!this._improvedCode || !this._originalEditor) {
 			vscode.window.showErrorMessage('No improved code available or no active editor found.');
@@ -105,6 +110,11 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		vscode.workspace.applyEdit(edit).then(success => {
 			if (success) {
 				vscode.window.showInformationMessage('Improved code applied successfully!');
+				
+				// Close the improved code editor without saving
+				if (this._improvedCodeEditor) {
+					vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+				}
 			} else {
 				vscode.window.showErrorMessage('Failed to apply improved code.');
 			}
