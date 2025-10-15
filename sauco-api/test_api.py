@@ -181,10 +181,12 @@ def fibonacci(n):
                 print(f"Before improvement - If count: {metrics['before']['number_of_ifs']}")
                 print(f"Before improvement - Loop count: {metrics['before']['number_of_loops']}")
                 print(f"Before improvement - Cyclomatic complexity: {metrics['before']['cyclomatic_complexity']}")
+                print(f"Before improvement - Average method size: {metrics['before']['average_method_size']}")
                 print(f"After improvement - Method count: {metrics['after']['method_number']}")
                 print(f"After improvement - If count: {metrics['after']['number_of_ifs']}")
                 print(f"After improvement - Loop count: {metrics['after']['number_of_loops']}")
                 print(f"After improvement - Cyclomatic complexity: {metrics['after']['cyclomatic_complexity']}")
+                print(f"After improvement - Average method size: {metrics['after']['average_method_size']}")
             
             # Pretty print the JSON response
             pretty_json = json.dumps(response_data, indent=2)

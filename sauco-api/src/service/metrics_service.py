@@ -2,27 +2,55 @@ import ast
 import re
 from typing import Dict, Any, List, Set
 
-def count_methods(code: str) -> int:
+def count_methods(code: str) -> Dict[str, any]:
     """
-    Count the number of methods/functions in a given code snippet.
+    Count the number of methods/functions in a given code snippet and collect information about them.
     
     Args:
         code (str): The code snippet to analyze
         
     Returns:
-        int: The number of methods/functions found in the code
+        Dict[str, any]: A dictionary containing the method count and information about each method
     """
     try:
         # Try to parse the code as Python
         tree = ast.parse(code)
-        method_count = 0
+        methods = []
         
-        # Count function definitions
+        # Collect function definitions and their line counts
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                method_count += 1
+                # Calculate the number of lines in the function
+                start_line = node.lineno
+                end_line = 0
                 
-        return method_count
+                # Find the last line of the function by examining the last node in the body
+                for child in node.body:
+                    # Get the end line of the child node
+                    if hasattr(child, 'end_lineno') and child.end_lineno is not None:
+                        end_line = max(end_line, child.end_lineno)
+                    else:
+                        # If end_lineno is not available, use lineno as a fallback
+                        end_line = max(end_line, getattr(child, 'lineno', 0))
+                
+                # If we couldn't determine the end line, use the start line
+                if end_line == 0:
+                    end_line = start_line
+                
+                # Calculate the number of lines
+                line_count = end_line - start_line + 1
+                
+                methods.append({
+                    'name': node.name,
+                    'start_line': start_line,
+                    'end_line': end_line,
+                    'line_count': line_count
+                })
+                
+        return {
+            'count': len(methods),
+            'methods': methods
+        }
     except SyntaxError:
         # If the code is not valid Python, use regex as a fallback
         # This is less accurate but can work for other languages
@@ -41,8 +69,13 @@ def count_methods(code: str) -> int:
         method_count = 0
         for pattern in patterns:
             method_count += len(re.findall(pattern, code))
-            
-        return method_count
+        
+        # For non-Python code, we can't easily determine method sizes
+        # So we'll just return the count and an empty methods list
+        return {
+            'count': method_count,
+            'methods': []
+        }
 
 def count_ifs(code: str) -> int:
     """
@@ -323,6 +356,37 @@ def calculate_cyclomatic_complexity(code: str) -> Dict[str, any]:
             "functions": []  # Can't determine per-function complexity with regex
         }
 
+def calculate_average_method_size(code: str) -> float:
+    """
+    Calculate the average number of lines of code per method in a given code snippet.
+    
+    Args:
+        code (str): The code snippet to analyze
+        
+    Returns:
+        float: The average number of lines of code per method
+    """
+    methods_info = count_methods(code)
+    
+    if methods_info['count'] == 0:
+        return 0.0
+    
+    # If we have detailed method information (Python code)
+    if methods_info['methods']:
+        total_lines = sum(method['line_count'] for method in methods_info['methods'])
+        return total_lines / methods_info['count']
+    
+    # For non-Python code, we can make a rough estimate
+    # by counting the total lines and dividing by the number of methods
+    lines = code.split('\n')
+    non_empty_lines = [line for line in lines if line.strip()]
+    
+    # Avoid division by zero
+    if methods_info['count'] == 0:
+        return 0.0
+    
+    return len(non_empty_lines) / methods_info['count']
+
 def calculate_metrics(code: str) -> Dict[str, Any]:
     """
     Calculate various metrics for a given code snippet.
@@ -336,7 +400,8 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     metrics = {}
     
     # Count methods
-    metrics["method_number"] = count_methods(code)
+    methods_info = count_methods(code)
+    metrics["method_number"] = methods_info['count']
     
     # Count if statements
     metrics["number_of_ifs"] = count_ifs(code)
@@ -347,6 +412,9 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     # Calculate cyclomatic complexity
     complexity = calculate_cyclomatic_complexity(code)
     metrics["cyclomatic_complexity"] = complexity["total"]
+    
+    # Calculate average method size
+    metrics["average_method_size"] = calculate_average_method_size(code)
     
     # Additional metrics can be added here in the future
     
