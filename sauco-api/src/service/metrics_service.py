@@ -86,6 +86,55 @@ def count_ifs(code: str) -> int:
             
         return if_count
 
+def count_loops(code: str) -> int:
+    """
+    Count the number of loops in a given code snippet.
+    
+    Args:
+        code (str): The code snippet to analyze
+        
+    Returns:
+        int: The number of loops found in the code
+    """
+    try:
+        # Try to parse the code as Python
+        tree = ast.parse(code)
+        loop_count = 0
+        
+        # Count loop statements (for, while)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.For, ast.While)):
+                loop_count += 1
+                
+        return loop_count
+    except SyntaxError:
+        # If the code is not valid Python, use regex as a fallback
+        # This is less accurate but can work for other languages
+        
+        # Pattern for common loop statements in various languages
+        # This covers Python, JavaScript, Java, C#, C++, etc.
+        patterns = [
+            # for loops
+            r'for\s*\(',
+            r'for\s+[^(]',  # Python style for without parentheses
+            # while loops
+            r'while\s*\(',
+            r'while\s+[^(]',  # Python style while without parentheses
+            # do-while loops
+            r'do\s*{',
+            # forEach and other iterator methods in JavaScript
+            r'\.forEach\s*\(',
+            r'\.map\s*\(',
+            r'\.filter\s*\(',
+            r'\.reduce\s*\('
+        ]
+        
+        loop_count = 0
+        for pattern in patterns:
+            loop_count += len(re.findall(pattern, code))
+            
+        return loop_count
+
 def calculate_metrics(code: str) -> Dict[str, Any]:
     """
     Calculate various metrics for a given code snippet.
@@ -103,6 +152,9 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     
     # Count if statements
     metrics["number_of_ifs"] = count_ifs(code)
+    
+    # Count loops
+    metrics["number_of_loops"] = count_loops(code)
     
     # Additional metrics can be added here in the future
     
