@@ -1,6 +1,6 @@
 # /src/service/improvement_service.py
 from __future__ import annotations
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 import re
 import os
 
@@ -64,8 +64,10 @@ class ImprovementService:
 
         print("starting workflow")
 
-        analysis = await self._describe_code(code)
-        retrieved_text = self._retrieve_context(analysis)
+        analysis_list = await self._describe_code(code)
+        # Join the analysis list for display purposes
+        analysis = "\n\n".join(analysis_list)
+        retrieved_text = self._retrieve_context(analysis_list)
         recommendations = await self._recommendations(code, analysis, retrieved_text)
         improved_code = await self._refactor_code(code, recommendations, retrieved_text)
 
@@ -76,21 +78,28 @@ class ImprovementService:
         return analysis, improved_code
 
     # -------------------- Steps --------------------
-    async def _describe_code(self, code: str) -> str:
+    async def _describe_code(self, code: str) -> List[str]:
         """
         Pide a OpenAI que describa el código: propósito, métodos/funciones, variables,
         bucles/condiciones y posibles problemas visibles (sin cambiar comportamiento).
+        
+        Returns a list of descriptions for different aspects of the code.
         """
         print("Describing...")
 
         prompt = f"""
-            You are a senior engineer. Analyze the following code and return a concise description including:
-            - Purpose / responsibility
-            - Public API (functions/classes)
-            - Variables and their roles
-            - Loops/conditionals and data flow
-            - Any obvious smells (too long methods, unclear names, missing docstrings)
-
+            You are a senior engineer. Analyze the following code and return a structured description with each aspect clearly separated.
+            
+            Analyze these aspects:
+            1. Purpose / responsibility
+            2. Public API (functions/classes)
+            3. Variables and their roles
+            4. Loops/conditionals and data flow
+            5. Any obvious smells (too long methods, unclear names, missing docstrings)
+            
+            Format your response with clear section headers (e.g., "## Purpose", "## Public API", etc.) 
+            so I can parse each section separately. Each section should be self-contained and meaningful on its own.
+            
             Return plain text (no markdown fences).
 
             CODE:
@@ -105,36 +114,79 @@ class ImprovementService:
             ]
         )
 
+        content = resp.choices[0].message.content.strip()
         print(resp)
-        return resp.choices[0].message.content.strip()
+        
+        # Parse the response into separate sections
+        sections = []
+        
+        # Split by section headers (## Something)
+        import re
+        section_pattern = r'##\s+(.*?)(?=##\s+|$)'
+        matches = re.findall(section_pattern, content, re.DOTALL)
+        
+        if matches:
+            # If we found structured sections, use them
+            for match in matches:
+                section_text = match.strip()
+                if section_text:
+                    sections.append(section_text)
+        else:
+            # If no sections found, split by newlines and filter empty lines
+            lines = content.split('\n')
+            current_section = []
+            
+            for line in lines:
+                if line.strip():
+                    current_section.append(line)
+                elif current_section:
+                    sections.append('\n'.join(current_section))
+                    current_section = []
+            
+            if current_section:
+                sections.append('\n'.join(current_section))
+        
+        # If we still don't have sections, just use the whole content as one section
+        if not sections:
+            sections = [content]
+            
+        return sections
 
-    def _retrieve_context(self, query_text: str) -> str:
+    def _retrieve_context(self, query_text: Union[str, List[str]]) -> str:
         """
         Realiza retrieval en Qdrant usando TF-IDF sparse search y concatena los top chunks.
+        
+        Accepts either a single query string or a list of query strings.
+        For a list, it performs a search for each item and combines the results.
         """
-
         print("Retrieving...")
         if not self.qdrant or not self.collection or not self.vectorizer:
             return ""
-        results = search_tfidf(
-            client=self.qdrant,
-            collection_name=self.collection,
-            query=query_text,
-            vectorizer=self.vectorizer,
-            top_k=5
-        )
-        chunks: List[str] = []
-
-        print(chunks)
-
-        for r in results or []:
-            payload = getattr(r, "payload", {}) or {}
-            txt = payload.get("text") or ""
-            if txt:
-                chunks.append(txt)
-
             
-        return "\n\n---\n\n".join(chunks[:5])
+        all_chunks: List[str] = []
+        
+        # Handle both string and list inputs
+        queries = query_text if isinstance(query_text, list) else [query_text]
+        
+        # Process each query
+        for query in queries:
+            results = search_tfidf(
+                client=self.qdrant,
+                collection_name=self.collection,
+                query=query,
+                vectorizer=self.vectorizer,
+                top_k=3  # Reduced from 5 to avoid too many results when using multiple queries
+            )
+            
+            for r in results or []:
+                payload = getattr(r, "payload", {}) or {}
+                txt = payload.get("text") or ""
+                if txt and txt not in all_chunks:  # Avoid duplicates
+                    all_chunks.append(txt)
+        
+        print(f"Retrieved {len(all_chunks)} unique chunks")
+            
+        return "\n\n---\n\n".join(all_chunks[:5])  # Still limit to top 5 overall
 
     async def _recommendations(self, code: str, analysis: str, retrieved: str) -> str:
         """
