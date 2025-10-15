@@ -196,9 +196,9 @@ export function activate(context: vscode.ExtensionContext) {
 				if (!analyzeUrl.endsWith('/')) {
 					analyzeUrl += '/';
 				}
-				analyzeUrl += 'analyze/';
+				analyzeUrl += 'improve';
 				
-				const requestBody = JSON.stringify({ code });
+				const requestBody = JSON.stringify({ Code: code });
 				
 				console.log(`Sending request to: ${analyzeUrl}`);
 				console.log(`Request body: ${requestBody}`);
@@ -218,9 +218,70 @@ export function activate(context: vscode.ExtensionContext) {
 					throw new Error(`API request failed with status ${response.status}: ${errorText}`);
 				}
 				
-				const result = await response.json() as { Analisis: string, code: string };
+				const result = await response.json() as { 
+					Analisis: string, 
+					Code: string, 
+					RetrievedContext: Array<{
+						score: number,
+						page?: number,
+						chunk_id?: string,
+						text: string
+					}>,
+					metrics?: {
+						before: {
+							method_number: number,
+							number_of_ifs: number,
+							number_of_loops: number,
+							cyclomatic_complexity: number,
+							average_method_size: number
+						},
+						after: {
+							method_number: number,
+							number_of_ifs: number,
+							number_of_loops: number,
+							cyclomatic_complexity: number,
+							average_method_size: number
+						}
+					}
+				};
 				
-				await createSideBySideComparison(editor.document.getText(), result.Analisis, result.code);
+				// Create a formatted display of the retrieved context
+				let contextDisplay = '';
+				if (result.RetrievedContext && result.RetrievedContext.length > 0) {
+					contextDisplay = '\n\n## Retrieved Context\n\n';
+					result.RetrievedContext.forEach((context, index) => {
+						contextDisplay += `### Context ${index + 1} (Score: ${context.score.toFixed(2)})\n\n`;
+						if (context.page) {
+							contextDisplay += `Page: ${context.page}\n\n`;
+						}
+						if (context.chunk_id) {
+							contextDisplay += `Chunk ID: ${context.chunk_id}\n\n`;
+						}
+						contextDisplay += `\`\`\`\n${context.text}\n\`\`\`\n\n`;
+					});
+				}
+				
+				// Create a formatted display of the metrics
+				let metricsDisplay = '';
+				if (result.metrics) {
+					metricsDisplay = '\n\n## Code Metrics Comparison\n\n';
+					metricsDisplay += '| Metric | Before | After | Change |\n';
+					metricsDisplay += '|--------|--------|-------|-------|\n';
+					
+					const before = result.metrics.before;
+					const after = result.metrics.after;
+					
+					metricsDisplay += `| Methods | ${before.method_number} | ${after.method_number} | ${after.method_number - before.method_number} |\n`;
+					metricsDisplay += `| If Statements | ${before.number_of_ifs} | ${after.number_of_ifs} | ${after.number_of_ifs - before.number_of_ifs} |\n`;
+					metricsDisplay += `| Loops | ${before.number_of_loops} | ${after.number_of_loops} | ${after.number_of_loops - before.number_of_loops} |\n`;
+					metricsDisplay += `| Cyclomatic Complexity | ${before.cyclomatic_complexity} | ${after.cyclomatic_complexity} | ${after.cyclomatic_complexity - before.cyclomatic_complexity} |\n`;
+					metricsDisplay += `| Avg Method Size | ${before.average_method_size.toFixed(2)} | ${after.average_method_size.toFixed(2)} | ${(after.average_method_size - before.average_method_size).toFixed(2)} |\n`;
+				}
+				
+				// Combine the analysis with context and metrics
+				const fullAnalysis = result.Analisis + contextDisplay + metricsDisplay;
+				
+				await createSideBySideComparison(editor.document.getText(), fullAnalysis, result.Code);
 				
 			} catch (error) {
 				console.error('Error analyzing code:', error);
@@ -278,7 +339,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				explainUrl += 'explain/';
 				
-				const requestBody = JSON.stringify({ code });
+				const requestBody = JSON.stringify({ Code: code });
 				
 				console.log(`Sending request to: ${explainUrl}`);
 				console.log(`Request body: ${requestBody}`);
