@@ -53,13 +53,13 @@ class ImprovementService:
         self.vectorizer = vectorizer
 
     # -------------------- Public API --------------------
-    async def run_workflow(self, code: str) -> Tuple[str, str]:
+    async def run_workflow(self, code: str) -> Tuple[str, str, List[Dict]]:
         """
         1) Describe y analiza el código (variables, métodos, bucles, responsabilidades)
         2) Usa esa descripción como query TF-IDF en Qdrant para recuperar contexto (chunks)
         3) Pide recomendaciones a OpenAI
         4) Pide código mejorado a OpenAI
-        Returns: (analysis_text, improved_code)
+        Returns: (analysis_text, improved_code, retrieved_context_details)
         """
 
         print("starting workflow")
@@ -67,15 +67,15 @@ class ImprovementService:
         analysis_list = await self._describe_code(code)
         # Join the analysis list for display purposes
         analysis = "\n\n".join(analysis_list)
-        retrieved_text = self._retrieve_context(analysis_list)
+        retrieved_text, chunk_details = self._retrieve_context(analysis_list)
         recommendations = await self._recommendations(code, analysis, retrieved_text)
         improved_code = await self._refactor_code(code, recommendations, retrieved_text)
 
-        print("-- Improve Code"*30)
-        print(improved_code)
-        print("--"*30)
+        #print("-- Improve Code"*30)
+        #print(improved_code)
+        #print("--"*30)
 
-        return analysis, improved_code
+        return analysis, improved_code, chunk_details
 
     # -------------------- Steps --------------------
     async def _describe_code(self, code: str) -> List[str]:
@@ -117,22 +117,18 @@ class ImprovementService:
         content = resp.choices[0].message.content.strip()
         print(resp)
         
-        # Parse the response into separate sections
         sections = []
         
-        # Split by section headers (## Something)
         import re
         section_pattern = r'##\s+(.*?)(?=##\s+|$)'
         matches = re.findall(section_pattern, content, re.DOTALL)
         
         if matches:
-            # If we found structured sections, use them
             for match in matches:
                 section_text = match.strip()
                 if section_text:
                     sections.append(section_text)
         else:
-            # If no sections found, split by newlines and filter empty lines
             lines = content.split('\n')
             current_section = []
             
@@ -146,47 +142,64 @@ class ImprovementService:
             if current_section:
                 sections.append('\n'.join(current_section))
         
-        # If we still don't have sections, just use the whole content as one section
         if not sections:
             sections = [content]
             
         return sections
 
-    def _retrieve_context(self, query_text: Union[str, List[str]]) -> str:
+    def _retrieve_context(self, query_text: Union[str, List[str]]) -> Tuple[str, List[Dict]]:
         """
         Realiza retrieval en Qdrant usando TF-IDF sparse search y concatena los top chunks.
         
         Accepts either a single query string or a list of query strings.
         For a list, it performs a search for each item and combines the results.
+        
+        Returns:
+            Tuple containing:
+            - A string with concatenated text of chunks (for backward compatibility)
+            - A list of dictionaries with chunk details (score, page, chunk_id, text)
         """
-        print("Retrieving...")
+        print("Retrieving Context...")
+
         if not self.qdrant or not self.collection or not self.vectorizer:
-            return ""
+            return "", []
             
         all_chunks: List[str] = []
+        chunk_details: List[Dict] = []
         
-        # Handle both string and list inputs
         queries = query_text if isinstance(query_text, list) else [query_text]
         
-        # Process each query
         for query in queries:
             results = search_tfidf(
                 client=self.qdrant,
                 collection_name=self.collection,
                 query=query,
                 vectorizer=self.vectorizer,
-                top_k=3  # Reduced from 5 to avoid too many results when using multiple queries
+                top_k=3  
             )
             
             for r in results or []:
                 payload = getattr(r, "payload", {}) or {}
                 txt = payload.get("text") or ""
-                if txt and txt not in all_chunks:  # Avoid duplicates
+                
+                if txt and txt not in all_chunks:
                     all_chunks.append(txt)
+                    
+                    chunk_details.append({
+                        "score": getattr(r, "score", 0.0),
+                        "page": payload.get("page"),
+                        "chunk_id": payload.get("chunk_id"),
+                        "text": txt
+                    })
         
         print(f"Retrieved {len(all_chunks)} unique chunks")
+        
+        chunk_details.sort(key=lambda x: x["score"], reverse=True)
+        
+        chunk_details = chunk_details[:5]
+        all_chunks_text = "\n\n---\n\n".join([c["text"] for c in chunk_details])
             
-        return "\n\n---\n\n".join(all_chunks[:5])  # Still limit to top 5 overall
+        return all_chunks_text, chunk_details
 
     async def _recommendations(self, code: str, analysis: str, retrieved: str) -> str:
         """
@@ -251,6 +264,6 @@ class ImprovementService:
 
         text = resp.choices[0].message.content or ""
         m = re.search(r"(?:improved)?\s*(.*?)", text, flags=re.S)
-        print("#"*40)
-        print(text)
+        #print("#"*40)
+        #print(text)
         return text #m.group(1).strip() if m else text.strip()
