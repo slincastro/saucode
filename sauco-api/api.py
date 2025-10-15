@@ -10,30 +10,25 @@ from src.service.improvement_service import ImprovementService
 from src.domain.models import ImproveRequest, ImproveResponse, RetrieveContextRequest, RetrieveContextResponse
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# --------- App ----------
 app = FastAPI(title="Code Improver API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
-# --------- Config ----------
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")  # opcional
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")  
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "code_knowledge")
 TFIDF_VECTORIZER_PATH = os.getenv("TFIDF_VECTORIZER_PATH")  # ej: ./vectorizer.pkl
 
-# Carga vectorizer si está configurado
 _vectorizer = None
 if TFIDF_VECTORIZER_PATH and os.path.exists(TFIDF_VECTORIZER_PATH):
     with open(TFIDF_VECTORIZER_PATH, "rb") as f:
         _vectorizer = pickle.load(f)
 
-# Qdrant client
 _qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY) if QDRANT_URL else None
 
-# Service singleton
 _service = ImprovementService(
     openai_model=OPENAI_MODEL,
     qdrant_client=_qdrant,
@@ -41,7 +36,19 @@ _service = ImprovementService(
     vectorizer=_vectorizer,
 )
 
-# --------- Endpoints ----------
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint to verify the API is running correctly.
+    Returns a 200 OK status code with basic health information.
+    """
+    return {
+        "status": "healthy",
+        "api": "sauco-api",
+        "version": "1.0.0"
+    }
+
 @app.post("/improve", response_model=ImproveResponse)
 async def improve(req: ImproveRequest):
     try:
