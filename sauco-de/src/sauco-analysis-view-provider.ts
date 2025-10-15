@@ -35,6 +35,8 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 	private _extensionUri: vscode.Uri;
 	private _metricsContent: string = '';
 	private _metricsData?: MetricsData;
+	private _improvedCode: string = '';
+	private _originalEditor?: vscode.TextEditor;
 
 	constructor(private readonly extensionUri: vscode.Uri) {
 		this._extensionUri = extensionUri;
@@ -53,16 +55,60 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		};
 
 		webviewView.webview.html = this._getHtmlForWebview('No analysis results yet', '');
+
+		// Handle messages from the webview
+		webviewView.webview.onDidReceiveMessage(message => {
+			switch (message.command) {
+				case 'applyImprovedCode':
+					this._applyImprovedCode();
+					return;
+			}
+		});
 	}
 
-	public updateContent(analysisResult: string, fileName: string, metricsData?: MetricsData) {
+	public updateContent(analysisResult: string, fileName: string, metricsData?: MetricsData, improvedCode?: string) {
 		if (metricsData) {
 			this._metricsData = metricsData;
+		}
+		if (improvedCode) {
+			this._improvedCode = improvedCode;
 		}
 		if (this._view) {
 			this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
 			this._view.show(true);
 		}
+	}
+
+	public setOriginalEditor(editor: vscode.TextEditor) {
+		this._originalEditor = editor;
+	}
+
+	private _applyImprovedCode() {
+		if (!this._improvedCode || !this._originalEditor) {
+			vscode.window.showErrorMessage('No improved code available or no active editor found.');
+			return;
+		}
+
+		const editor = this._originalEditor;
+		
+		// Get the selection or use the entire document if no selection
+		const selection = editor.selection;
+		const range = selection.isEmpty 
+			? new vscode.Range(0, 0, editor.document.lineCount, 0) 
+			: selection;
+
+		// Create an edit to replace the selected text or entire document
+		const edit = new vscode.WorkspaceEdit();
+		edit.replace(editor.document.uri, range, this._improvedCode);
+
+		// Apply the edit
+		vscode.workspace.applyEdit(edit).then(success => {
+			if (success) {
+				vscode.window.showInformationMessage('Improved code applied successfully!');
+			} else {
+				vscode.window.showErrorMessage('Failed to apply improved code.');
+			}
+		});
 	}
 
 	public updateMetricsContent(metricsTable: string, fileName: string) {
@@ -76,6 +122,7 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 	private _getHtmlForWebview(analysisResult: string, fileName: string) {
 		const title = fileName ? `Code Analysis for ${fileName}` : 'Code Analysis';
 		const hasMetricsData = this._metricsData !== undefined;
+		const hasImprovedCode = this._improvedCode !== '';
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -133,6 +180,24 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 					width: 100%;
 					height: 300px;
 					margin: 20px 0;
+				}
+				.apply-button {
+					background-color: var(--vscode-button-background);
+					color: var(--vscode-button-foreground);
+					border: none;
+					padding: 8px 16px;
+					border-radius: 4px;
+					cursor: pointer;
+					font-weight: bold;
+					margin-top: 10px;
+					margin-bottom: 20px;
+				}
+				.apply-button:hover {
+					background-color: var(--vscode-button-hoverBackground);
+				}
+				.apply-button:active {
+					background-color: var(--vscode-button-background);
+					opacity: 0.8;
 				}
 			</style>
 		</head>
@@ -202,11 +267,33 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 			</div>
 			` : ''}
 			
+			${hasImprovedCode ? `
+			<div id="apply-button-container">
+				<button class="apply-button" id="apply-improved-code">Apply Improved Code</button>
+			</div>
+			` : ''}
+			
 			${analysisResult ? `
 			<div id="analysis-content">
 				${this._formatAnalysisContent(analysisResult)}
 			</div>
 			` : ''}
+			
+			<script>
+				const vscode = acquireVsCodeApi();
+				
+				// Add event listener for the apply button if it exists
+				document.addEventListener('DOMContentLoaded', function() {
+					const applyButton = document.getElementById('apply-improved-code');
+					if (applyButton) {
+						applyButton.addEventListener('click', function() {
+							vscode.postMessage({
+								command: 'applyImprovedCode'
+							});
+						});
+					}
+				});
+			</script>
 		</body>
 		</html>`;
 	}

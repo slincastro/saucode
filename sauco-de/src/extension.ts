@@ -444,6 +444,11 @@ async function createSideBySideComparison(
 
 		const activeColumn = vscode.window.activeTextEditor?.viewColumn || vscode.ViewColumn.One;
 		
+		// Store the original editor for later use when applying improved code
+		if (vscode.window.activeTextEditor) {
+			(global as any).saucoAnalysisViewProvider.setOriginalEditor(vscode.window.activeTextEditor);
+		}
+		
 		await vscode.window.showTextDocument(
 			vscode.window.activeTextEditor!.document, 
 			{ viewColumn: activeColumn, preview: false }
@@ -458,7 +463,8 @@ async function createSideBySideComparison(
 			}
 		);
 		
-		(global as any).saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData);
+		// Pass the improved code to the analysis view provider
+		(global as any).saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData, improvedCode);
 		
 		await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
 		await vscode.commands.executeCommand('saucoAnalysisView.focus');

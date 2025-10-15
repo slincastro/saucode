@@ -1,6 +1,40 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SaucoAnalysisViewProvider = void 0;
+const vscode = __importStar(require("vscode"));
 // Import marked using a workaround for ESM/CommonJS compatibility
 let marked;
 try {
@@ -20,6 +54,8 @@ class SaucoAnalysisViewProvider {
     _extensionUri;
     _metricsContent = '';
     _metricsData;
+    _improvedCode = '';
+    _originalEditor;
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
         this._extensionUri = extensionUri;
@@ -31,15 +67,53 @@ class SaucoAnalysisViewProvider {
             localResourceRoots: [this._extensionUri]
         };
         webviewView.webview.html = this._getHtmlForWebview('No analysis results yet', '');
+        // Handle messages from the webview
+        webviewView.webview.onDidReceiveMessage(message => {
+            switch (message.command) {
+                case 'applyImprovedCode':
+                    this._applyImprovedCode();
+                    return;
+            }
+        });
     }
-    updateContent(analysisResult, fileName, metricsData) {
+    updateContent(analysisResult, fileName, metricsData, improvedCode) {
         if (metricsData) {
             this._metricsData = metricsData;
+        }
+        if (improvedCode) {
+            this._improvedCode = improvedCode;
         }
         if (this._view) {
             this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
             this._view.show(true);
         }
+    }
+    setOriginalEditor(editor) {
+        this._originalEditor = editor;
+    }
+    _applyImprovedCode() {
+        if (!this._improvedCode || !this._originalEditor) {
+            vscode.window.showErrorMessage('No improved code available or no active editor found.');
+            return;
+        }
+        const editor = this._originalEditor;
+        // Get the selection or use the entire document if no selection
+        const selection = editor.selection;
+        const range = selection.isEmpty
+            ? new vscode.Range(0, 0, editor.document.lineCount, 0)
+            : selection;
+        // Create an edit to replace the selected text or entire document
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(editor.document.uri, range, this._improvedCode);
+        // Apply the edit
+        vscode.workspace.applyEdit(edit).then(success => {
+            if (success) {
+                vscode.window.showInformationMessage('Improved code applied successfully!');
+            }
+            else {
+                vscode.window.showErrorMessage('Failed to apply improved code.');
+            }
+        });
     }
     updateMetricsContent(metricsTable, fileName) {
         this._metricsContent = metricsTable;
@@ -51,6 +125,7 @@ class SaucoAnalysisViewProvider {
     _getHtmlForWebview(analysisResult, fileName) {
         const title = fileName ? `Code Analysis for ${fileName}` : 'Code Analysis';
         const hasMetricsData = this._metricsData !== undefined;
+        const hasImprovedCode = this._improvedCode !== '';
         return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -107,6 +182,24 @@ class SaucoAnalysisViewProvider {
 					width: 100%;
 					height: 300px;
 					margin: 20px 0;
+				}
+				.apply-button {
+					background-color: var(--vscode-button-background);
+					color: var(--vscode-button-foreground);
+					border: none;
+					padding: 8px 16px;
+					border-radius: 4px;
+					cursor: pointer;
+					font-weight: bold;
+					margin-top: 10px;
+					margin-bottom: 20px;
+				}
+				.apply-button:hover {
+					background-color: var(--vscode-button-hoverBackground);
+				}
+				.apply-button:active {
+					background-color: var(--vscode-button-background);
+					opacity: 0.8;
 				}
 			</style>
 		</head>
@@ -176,11 +269,33 @@ class SaucoAnalysisViewProvider {
 			</div>
 			` : ''}
 			
+			${hasImprovedCode ? `
+			<div id="apply-button-container">
+				<button class="apply-button" id="apply-improved-code">Apply Improved Code</button>
+			</div>
+			` : ''}
+			
 			${analysisResult ? `
 			<div id="analysis-content">
 				${this._formatAnalysisContent(analysisResult)}
 			</div>
 			` : ''}
+			
+			<script>
+				const vscode = acquireVsCodeApi();
+				
+				// Add event listener for the apply button if it exists
+				document.addEventListener('DOMContentLoaded', function() {
+					const applyButton = document.getElementById('apply-improved-code');
+					if (applyButton) {
+						applyButton.addEventListener('click', function() {
+							vscode.postMessage({
+								command: 'applyImprovedCode'
+							});
+						});
+					}
+				});
+			</script>
 		</body>
 		</html>`;
     }

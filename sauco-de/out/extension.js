@@ -335,13 +335,18 @@ async function createSideBySideComparison(originalCode, analysisResult, improved
             language: vscode.window.activeTextEditor?.document.languageId || 'plaintext' // Use the same language as the original file
         });
         const activeColumn = vscode.window.activeTextEditor?.viewColumn || vscode.ViewColumn.One;
+        // Store the original editor for later use when applying improved code
+        if (vscode.window.activeTextEditor) {
+            global.saucoAnalysisViewProvider.setOriginalEditor(vscode.window.activeTextEditor);
+        }
         await vscode.window.showTextDocument(vscode.window.activeTextEditor.document, { viewColumn: activeColumn, preview: false });
         await vscode.window.showTextDocument(improvedCodeDocument, {
             viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: false
         });
-        global.saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData);
+        // Pass the improved code to the analysis view provider
+        global.saucoAnalysisViewProvider.updateContent(analysisResult, fileName, metricsData, improvedCode);
         await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
         await vscode.commands.executeCommand('saucoAnalysisView.focus');
         vscode.window.showInformationMessage('Code analysis complete! The improved code is displayed in the side panel and the analysis is in the activity window.');
