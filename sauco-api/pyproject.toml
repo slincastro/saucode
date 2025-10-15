@@ -1,0 +1,17 @@
+[project]
+name = "sauco-api"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Slin"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "qdrant-client (>=1.15.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

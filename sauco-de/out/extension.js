@@ -156,7 +156,13 @@ function activate(context) {
             vscode.window.showErrorMessage('No active editor found. Please open a file to analyze.');
             return;
         }
-        const code = editor.document.getText();
+        // Get selected text or entire document if no selection
+        const selection = editor.selection;
+        const code = selection.isEmpty
+            ? editor.document.getText()
+            : editor.document.getText(selection);
+        // Show what's being analyzed
+        console.log('Analyzing code selection:', selection.isEmpty ? 'Entire document' : 'Selected text');
         const config = vscode.workspace.getConfiguration('sauco-de');
         const apiUrl = config.get('apiUrl');
         if (!apiUrl) {
@@ -216,7 +222,13 @@ function activate(context) {
             vscode.window.showErrorMessage('No active editor found. Please open a file to explain.');
             return;
         }
-        const code = editor.document.getText();
+        // Get selected text or entire document if no selection
+        const selection = editor.selection;
+        const code = selection.isEmpty
+            ? editor.document.getText()
+            : editor.document.getText(selection);
+        // Show what's being explained
+        console.log('Explaining code selection:', selection.isEmpty ? 'Entire document' : 'Selected text');
         const config = vscode.workspace.getConfiguration('sauco-de');
         const apiUrl = config.get('apiUrl');
         if (!apiUrl) {
