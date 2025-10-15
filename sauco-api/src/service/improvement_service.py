@@ -88,12 +88,14 @@ class ImprovementService:
             before=Metrics(
                 method_number=before_metrics["method_number"],
                 number_of_ifs=before_metrics["number_of_ifs"],
-                number_of_loops=before_metrics["number_of_loops"]
+                number_of_loops=before_metrics["number_of_loops"],
+                cyclomatic_complexity=before_metrics["cyclomatic_complexity"]
             ),
             after=Metrics(
                 method_number=after_metrics["method_number"],
                 number_of_ifs=after_metrics["number_of_ifs"],
-                number_of_loops=after_metrics["number_of_loops"]
+                number_of_loops=after_metrics["number_of_loops"],
+                cyclomatic_complexity=after_metrics["cyclomatic_complexity"]
             )
         )
 

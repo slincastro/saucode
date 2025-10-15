@@ -1,6 +1,6 @@
 import ast
 import re
-from typing import Dict, Any
+from typing import Dict, Any, List, Set
 
 def count_methods(code: str) -> int:
     """
@@ -135,6 +135,194 @@ def count_loops(code: str) -> int:
             
         return loop_count
 
+class CyclomaticComplexityVisitor(ast.NodeVisitor):
+    """
+    AST visitor that calculates the cyclomatic complexity of a Python function.
+    Cyclomatic complexity is calculated as:
+    CC = E - N + 2P
+    where:
+    - E is the number of edges in the control flow graph
+    - N is the number of nodes in the control flow graph
+    - P is the number of connected components (usually 1 for a single function)
+    
+    For practical purposes, we can calculate it as:
+    CC = 1 + <number of decision points>
+    
+    Decision points include:
+    - if/elif statements
+    - for/while loops
+    - except blocks
+    - boolean operations with short-circuit evaluation (and, or)
+    """
+    
+    def __init__(self):
+        self.complexity = 1  # Start with 1 (base complexity)
+        self.functions: List[Dict[str, any]] = []
+        self.current_function = None
+    
+    def visit_FunctionDef(self, node):
+        old_function = self.current_function
+        self.current_function = {
+            'name': node.name,
+            'complexity': 1,  # Start with 1 (base complexity)
+            'lineno': node.lineno
+        }
+        
+        # Visit all the statements in the function body
+        for child in node.body:
+            self.visit(child)
+        
+        # Save the function data
+        self.functions.append(self.current_function)
+        self.complexity += self.current_function['complexity'] - 1  # Add to total, subtract the base 1
+        
+        # Restore previous function context if we were in a nested function
+        self.current_function = old_function
+    
+    def visit_AsyncFunctionDef(self, node):
+        # Handle async functions the same way as regular functions
+        self.visit_FunctionDef(node)
+    
+    def visit_If(self, node):
+        # Each if/elif adds 1 to complexity
+        if self.current_function:
+            self.current_function['complexity'] += 1
+        else:
+            self.complexity += 1
+        
+        # Visit the test condition for boolean operators
+        self.visit(node.test)
+        
+        # Visit the body and else/elif clauses
+        for child in node.body:
+            self.visit(child)
+        for child in node.orelse:
+            self.visit(child)
+    
+    def visit_For(self, node):
+        # Each loop adds 1 to complexity
+        if self.current_function:
+            self.current_function['complexity'] += 1
+        else:
+            self.complexity += 1
+        
+        # Visit the body and else clause
+        for child in node.body:
+            self.visit(child)
+        for child in node.orelse:
+            self.visit(child)
+    
+    def visit_AsyncFor(self, node):
+        # Handle async for loops the same way as regular for loops
+        self.visit_For(node)
+    
+    def visit_While(self, node):
+        # Each loop adds 1 to complexity
+        if self.current_function:
+            self.current_function['complexity'] += 1
+        else:
+            self.complexity += 1
+        
+        # Visit the test condition for boolean operators
+        self.visit(node.test)
+        
+        # Visit the body and else clause
+        for child in node.body:
+            self.visit(child)
+        for child in node.orelse:
+            self.visit(child)
+    
+    def visit_Try(self, node):
+        # Each except handler adds 1 to complexity
+        if self.current_function:
+            self.current_function['complexity'] += len(node.handlers)
+        else:
+            self.complexity += len(node.handlers)
+        
+        # Visit the body, handlers, else, and finally clauses
+        for child in node.body:
+            self.visit(child)
+        for handler in node.handlers:
+            self.visit(handler)
+        for child in node.orelse:
+            self.visit(child)
+        for child in node.finalbody:
+            self.visit(child)
+    
+    def visit_BoolOp(self, node):
+        # Each boolean operator (and, or) adds 1 to complexity due to short-circuit evaluation
+        if isinstance(node.op, (ast.And, ast.Or)):
+            if self.current_function:
+                self.current_function['complexity'] += len(node.values) - 1
+            else:
+                self.complexity += len(node.values) - 1
+        
+        # Visit the values
+        for value in node.values:
+            self.visit(value)
+
+def calculate_cyclomatic_complexity(code: str) -> Dict[str, any]:
+    """
+    Calculate the cyclomatic complexity of a given code snippet.
+    
+    Args:
+        code (str): The code snippet to analyze
+        
+    Returns:
+        Dict[str, any]: A dictionary containing the total complexity and per-function complexity
+    """
+    try:
+        # Try to parse the code as Python
+        tree = ast.parse(code)
+        visitor = CyclomaticComplexityVisitor()
+        visitor.visit(tree)
+        
+        # Return the total complexity and per-function complexity
+        return {
+            "total": visitor.complexity,
+            "functions": visitor.functions
+        }
+    except SyntaxError:
+        # If the code is not valid Python, use regex as a fallback
+        # This is less accurate but can work for other languages
+        
+        # Pattern for decision points in various languages
+        patterns = [
+            # if statements
+            r'if\s*\(',
+            r'if\s+[^(]',  # Python style if without parentheses
+            # else if, elif variations
+            r'else\s+if\s*\(',
+            r'elif\s+',
+            # loops
+            r'for\s*\(',
+            r'for\s+[^(]',  # Python style for without parentheses
+            r'while\s*\(',
+            r'while\s+[^(]',  # Python style while without parentheses
+            r'do\s*{',
+            # try-catch
+            r'catch\s*\(',
+            r'except\s+',
+            # boolean operators (rough approximation)
+            r'\s+&&\s+',
+            r'\s+\|\|\s+',
+            r'\s+and\s+',
+            r'\s+or\s+'
+        ]
+        
+        # Count decision points
+        decision_points = 0
+        for pattern in patterns:
+            decision_points += len(re.findall(pattern, code))
+        
+        # Cyclomatic complexity = 1 + decision points
+        complexity = 1 + decision_points
+        
+        return {
+            "total": complexity,
+            "functions": []  # Can't determine per-function complexity with regex
+        }
+
 def calculate_metrics(code: str) -> Dict[str, Any]:
     """
     Calculate various metrics for a given code snippet.
@@ -155,6 +343,10 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     
     # Count loops
     metrics["number_of_loops"] = count_loops(code)
+    
+    # Calculate cyclomatic complexity
+    complexity = calculate_cyclomatic_complexity(code)
+    metrics["cyclomatic_complexity"] = complexity["total"]
     
     # Additional metrics can be added here in the future
     

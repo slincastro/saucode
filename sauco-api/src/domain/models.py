@@ -6,6 +6,7 @@ class Metrics(BaseModel):
     method_number: int = Field(0, description="Number of methods/functions in the code")
     number_of_ifs: int = Field(0, description="Number of if statements in the code")
     number_of_loops: int = Field(0, description="Number of loops in the code")
+    cyclomatic_complexity: int = Field(1, description="Cyclomatic complexity of the code")
 
 class MetricsResponse(BaseModel):
     before: Metrics = Field(Metrics(), description="Metrics before code improvement")
