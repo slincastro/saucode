@@ -124,10 +124,9 @@ class SaucoAnalysisViewProvider {
                 const improvement = await ApiService_1.ApiService.getCodeImprovement(fileContent);
                 this._currentImprovement = improvement;
                 progress.report({ increment: 100 });
-                // Open a new text editor with the improved code
                 await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
-                // Also update the webview with the side-by-side comparison
-                const content = ViewUtils_1.ViewUtils.createSideBySideComparison(improvement.originalCode, improvement.improvedCode);
+                // Only show the analysis and metrics in the side panel, not the code
+                const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
                 const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
                 const buttonsHtml = this._getButtonsHtml();
                 this._view?.webview.postMessage({

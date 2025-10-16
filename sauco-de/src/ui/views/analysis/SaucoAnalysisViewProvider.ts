@@ -109,8 +109,8 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 
           await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
 
-          // Also update the webview with the side-by-side comparison
-          const content = ViewUtils.createSideBySideComparison(improvement.originalCode, improvement.improvedCode);
+          // Only show the analysis and metrics in the side panel, not the code
+          const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
           const metricsHtml = ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
           const buttonsHtml = this._getButtonsHtml();
 
