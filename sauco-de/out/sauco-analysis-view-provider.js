@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SaucoAnalysisViewProvider = void 0;
 const vscode = __importStar(require("vscode"));
+const path = __importStar(require("path"));
 let marked;
 try {
     import('marked').then(m => {
@@ -53,6 +54,7 @@ class SaucoAnalysisViewProvider {
     _metricsContent = '';
     _metricsData;
     _improvedCode = '';
+    _analysisResult = '';
     _originalEditor;
     _improvedCodeEditor;
     constructor(extensionUri) {
@@ -82,8 +84,10 @@ class SaucoAnalysisViewProvider {
         if (improvedCode) {
             this._improvedCode = improvedCode;
         }
+        // Store the analysis result for later use
+        this._analysisResult = analysisResult || this._analysisResult;
         if (this._view) {
-            this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
+            this._view.webview.html = this._getHtmlForWebview(this._analysisResult, fileName);
             this._view.show(true);
         }
     }
@@ -98,6 +102,12 @@ class SaucoAnalysisViewProvider {
             vscode.window.showErrorMessage('No improved code available or no active editor found.');
             return;
         }
+        // Store current analysis content and metrics data
+        const metricsData = this._metricsData;
+        const improvedCode = this._improvedCode;
+        const analysisResult = this._analysisResult;
+        const fileName = this._originalEditor.document.fileName ?
+            path.basename(this._originalEditor.document.fileName) : 'code';
         const editor = this._originalEditor;
         const selection = editor.selection;
         const range = selection.isEmpty
@@ -106,12 +116,23 @@ class SaucoAnalysisViewProvider {
         const edit = new vscode.WorkspaceEdit();
         edit.replace(editor.document.uri, range, this._improvedCode);
         // Apply the edit
-        vscode.workspace.applyEdit(edit).then(success => {
+        vscode.workspace.applyEdit(edit).then(async (success) => {
             if (success) {
                 vscode.window.showInformationMessage('Improved code applied successfully!');
                 // Close the improved code editor without saving
                 if (this._improvedCodeEditor) {
                     vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                }
+                // Make sure the explorer view is visible
+                await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
+                // Ensure the analysis view is still visible with the same content
+                if (this._view) {
+                    // Re-apply the content to ensure it's displayed
+                    this.updateContent(this._analysisResult, fileName, this._metricsData, this._improvedCode);
+                    // Focus the analysis view
+                    await vscode.commands.executeCommand('saucoAnalysisView.focus');
+                    // Show the view
+                    this._view.show(true);
                 }
             }
             else {
@@ -129,6 +150,13 @@ class SaucoAnalysisViewProvider {
             this._view.webview.html = this._getHtmlForWebview('', fileName);
             this._view.show(true);
         }
+    }
+    /**
+     * Checks if the analysis view has content to display
+     * @returns true if there is analysis content, false otherwise
+     */
+    hasAnalysisContent() {
+        return this._analysisResult !== '';
     }
     _getHtmlForWebview(analysisResult, fileName) {
         const title = fileName ? `Code Analysis for ${fileName}` : 'Code Analysis';

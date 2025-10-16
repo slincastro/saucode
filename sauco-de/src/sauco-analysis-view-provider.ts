@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 let marked: any;
 try {
     import('marked').then(m => {
@@ -33,6 +34,7 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 	private _metricsContent: string = '';
 	private _metricsData?: MetricsData;
 	private _improvedCode: string = '';
+	private _analysisResult: string = '';
 	private _originalEditor?: vscode.TextEditor;
 	private _improvedCodeEditor?: vscode.TextEditor;
 
@@ -71,8 +73,11 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		if (improvedCode) {
 			this._improvedCode = improvedCode;
 		}
+		// Store the analysis result for later use
+		this._analysisResult = analysisResult || this._analysisResult;
+		
 		if (this._view) {
-			this._view.webview.html = this._getHtmlForWebview(analysisResult, fileName);
+			this._view.webview.html = this._getHtmlForWebview(this._analysisResult, fileName);
 			this._view.show(true);
 		}
 	}
@@ -91,6 +96,13 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
+		// Store current analysis content and metrics data
+		const metricsData = this._metricsData;
+		const improvedCode = this._improvedCode;
+		const analysisResult = this._analysisResult;
+		const fileName = this._originalEditor.document.fileName ? 
+			path.basename(this._originalEditor.document.fileName) : 'code';
+		
 		const editor = this._originalEditor;
 		
 		const selection = editor.selection;
@@ -102,13 +114,28 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		edit.replace(editor.document.uri, range, this._improvedCode);
 
 		// Apply the edit
-		vscode.workspace.applyEdit(edit).then(success => {
+		vscode.workspace.applyEdit(edit).then(async success => {
 			if (success) {
 				vscode.window.showInformationMessage('Improved code applied successfully!');
 				
 				// Close the improved code editor without saving
 				if (this._improvedCodeEditor) {
 					vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+				}
+				
+				// Make sure the explorer view is visible
+				await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
+				
+				// Ensure the analysis view is still visible with the same content
+				if (this._view) {
+					// Re-apply the content to ensure it's displayed
+					this.updateContent(this._analysisResult, fileName, this._metricsData, this._improvedCode);
+					
+					// Focus the analysis view
+					await vscode.commands.executeCommand('saucoAnalysisView.focus');
+					
+					// Show the view
+					this._view.show(true);
 				}
 			} else {
 				vscode.window.showErrorMessage('Failed to apply improved code.');
@@ -127,6 +154,14 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 			this._view.webview.html = this._getHtmlForWebview('', fileName);
 			this._view.show(true);
 		}
+	}
+	
+	/**
+	 * Checks if the analysis view has content to display
+	 * @returns true if there is analysis content, false otherwise
+	 */
+	public hasAnalysisContent(): boolean {
+		return this._analysisResult !== '';
 	}
 
 	private _getHtmlForWebview(analysisResult: string, fileName: string) {

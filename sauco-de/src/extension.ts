@@ -93,6 +93,17 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	(global as any).saucoAnalysisViewProvider = saucoAnalysisViewProvider;
 	
+	// Add event listener for editor closing to ensure analysis view stays visible
+	context.subscriptions.push(
+		vscode.window.onDidChangeVisibleTextEditors(async (editors) => {
+			// If the improved code editor was closed, ensure the analysis view is still visible
+			if (saucoAnalysisViewProvider.hasAnalysisContent()) {
+				await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
+				await vscode.commands.executeCommand('saucoAnalysisView.focus');
+			}
+		})
+	);
+	
 	// Register metrics
 	const metrics: Metric[] = [CognitiveComplexityMetric];
 	
