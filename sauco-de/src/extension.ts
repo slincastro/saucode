@@ -392,11 +392,21 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	const applyCodeDisposable = vscode.commands.registerCommand('sauco-de.applyCode', async () => {
+		// Call the applyImprovedCode method of the SaucoAnalysisViewProvider instance
+		if ((global as any).saucoAnalysisViewProvider) {
+			(global as any).saucoAnalysisViewProvider.applyImprovedCode();
+		} else {
+			vscode.window.showErrorMessage('No improved code available to apply.');
+		}
+	});
+
 	context.subscriptions.push(
 		helloWorldDisposable, 
 		configureDisposable, 
 		analyzeCodeDisposable, 
 		explainCodeDisposable,
+		applyCodeDisposable,
 		configStatusBarItem,
 		analyzeStatusBarItem,
 		explainStatusBarItem

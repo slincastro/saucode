@@ -62,6 +62,11 @@
         "command": "sauco-de.analyzeCode",
         "title": "Sauco: Analyze Code",
         "icon": "$(beaker)"
+      },
+      {
+        "command": "sauco-de.applyCode",
+        "title": "Sauco: Apply Code",
+        "icon": "$(check)"
       }
     ],
     "configuration": {
@@ -82,6 +87,10 @@
         },
         {
           "command": "sauco-de.analyzeCode",
+          "group": "navigation"
+        },
+        {
+          "command": "sauco-de.applyCode",
           "group": "navigation"
         }
       ],
@@ -109,6 +118,10 @@
         {
           "command": "sauco-de.analyzeCode",
           "title": "Sauco: Analyze Code"
+        },
+        {
+          "command": "sauco-de.applyCode",
+          "title": "Sauco: Apply Code"
         }
       ]
     }

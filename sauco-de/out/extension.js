@@ -317,7 +317,16 @@ function activate(context) {
             return Promise.resolve();
         });
     });
-    context.subscriptions.push(helloWorldDisposable, configureDisposable, analyzeCodeDisposable, explainCodeDisposable, configStatusBarItem, analyzeStatusBarItem, explainStatusBarItem);
+    const applyCodeDisposable = vscode.commands.registerCommand('sauco-de.applyCode', async () => {
+        // Call the applyImprovedCode method of the SaucoAnalysisViewProvider instance
+        if (global.saucoAnalysisViewProvider) {
+            global.saucoAnalysisViewProvider.applyImprovedCode();
+        }
+        else {
+            vscode.window.showErrorMessage('No improved code available to apply.');
+        }
+    });
+    context.subscriptions.push(helloWorldDisposable, configureDisposable, analyzeCodeDisposable, explainCodeDisposable, applyCodeDisposable, configStatusBarItem, analyzeStatusBarItem, explainStatusBarItem);
 }
 /**
  * Creates a side-by-side comparison view with the original code, analysis result, and improved code

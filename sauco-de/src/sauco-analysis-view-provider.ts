@@ -85,7 +85,7 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		this._improvedCodeEditor = editor;
 	}
 
-	private _applyImprovedCode() {
+	public applyImprovedCode() {
 		if (!this._improvedCode || !this._originalEditor) {
 			vscode.window.showErrorMessage('No improved code available or no active editor found.');
 			return;
@@ -114,6 +114,11 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 				vscode.window.showErrorMessage('Failed to apply improved code.');
 			}
 		});
+	}
+	
+	// Keep the private method for backward compatibility with the webview button
+	private _applyImprovedCode() {
+		this.applyImprovedCode();
 	}
 
 	public updateMetricsContent(metricsTable: string, fileName: string) {

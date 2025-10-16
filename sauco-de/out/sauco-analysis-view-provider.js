@@ -93,7 +93,7 @@ class SaucoAnalysisViewProvider {
     setImprovedCodeEditor(editor) {
         this._improvedCodeEditor = editor;
     }
-    _applyImprovedCode() {
+    applyImprovedCode() {
         if (!this._improvedCode || !this._originalEditor) {
             vscode.window.showErrorMessage('No improved code available or no active editor found.');
             return;
@@ -118,6 +118,10 @@ class SaucoAnalysisViewProvider {
                 vscode.window.showErrorMessage('Failed to apply improved code.');
             }
         });
+    }
+    // Keep the private method for backward compatibility with the webview button
+    _applyImprovedCode() {
+        this.applyImprovedCode();
     }
     updateMetricsContent(metricsTable, fileName) {
         this._metricsContent = metricsTable;
