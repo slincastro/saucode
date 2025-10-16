@@ -125,7 +125,6 @@ class SaucoAnalysisViewProvider {
                 this._currentImprovement = improvement;
                 progress.report({ increment: 100 });
                 await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
-                // Only show the analysis and metrics in the side panel, not the code
                 const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
                 const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
                 const buttonsHtml = this._getButtonsHtml();
