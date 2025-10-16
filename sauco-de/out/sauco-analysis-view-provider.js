@@ -35,10 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SaucoAnalysisViewProvider = void 0;
 const vscode = __importStar(require("vscode"));
-// Import marked using a workaround for ESM/CommonJS compatibility
 let marked;
 try {
-    // Try to import as ESM
     import('marked').then(m => {
         marked = m.marked || m.defaults || m;
     }).catch(e => {
@@ -101,12 +99,10 @@ class SaucoAnalysisViewProvider {
             return;
         }
         const editor = this._originalEditor;
-        // Get the selection or use the entire document if no selection
         const selection = editor.selection;
         const range = selection.isEmpty
             ? new vscode.Range(0, 0, editor.document.lineCount, 0)
             : selection;
-        // Create an edit to replace the selected text or entire document
         const edit = new vscode.WorkspaceEdit();
         edit.replace(editor.document.uri, range, this._improvedCode);
         // Apply the edit
