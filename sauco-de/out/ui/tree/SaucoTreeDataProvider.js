@@ -67,10 +67,6 @@ class SaucoTreeDataProvider {
         }
         else {
             return Promise.resolve([
-                new SaucoItem_1.SaucoItem('Documentation', 'View Sauco documentation', vscode.TreeItemCollapsibleState.None, {
-                    command: 'sauco-de.helloWorld', // For now, using helloWorld command
-                    title: 'Open Documentation'
-                }),
                 new SaucoItem_1.SaucoItem('Analyze Code', 'Analyze current code', vscode.TreeItemCollapsibleState.None, {
                     command: 'sauco-de.analyzeCode',
                     title: 'Analyze Code'

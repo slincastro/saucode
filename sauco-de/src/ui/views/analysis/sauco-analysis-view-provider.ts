@@ -73,7 +73,6 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 		if (improvedCode) {
 			this._improvedCode = improvedCode;
 		}
-		// Store the analysis result for later use
 		this._analysisResult = analysisResult || this._analysisResult;
 		
 		if (this._view) {
@@ -96,10 +95,6 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
-		// Store current analysis content and metrics data
-		const metricsData = this._metricsData;
-		const improvedCode = this._improvedCode;
-		const analysisResult = this._analysisResult;
 		const fileName = this._originalEditor.document.fileName ? 
 			path.basename(this._originalEditor.document.fileName) : 'code';
 		

@@ -17,11 +17,6 @@ export class CommandsService {
     context: vscode.ExtensionContext, 
     analysisViewProvider: any
   ): void {
-    // Hello World command
-    const helloWorldDisposable = vscode.commands.registerCommand('sauco-de.helloWorld', () => {
-      vscode.window.showInformationMessage('Hello World from sauco-de!');
-    });
-
     // Configure command
     const configureDisposable = vscode.commands.registerCommand('sauco-de.configure', async () => {
       await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
@@ -40,7 +35,6 @@ export class CommandsService {
 
     // Add all commands to subscriptions
     context.subscriptions.push(
-      helloWorldDisposable, 
       configureDisposable, 
       analyzeCodeDisposable,
       showMetricsDisposable

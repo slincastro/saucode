@@ -36,15 +36,6 @@ export class SaucoTreeDataProvider implements vscode.TreeDataProvider<SaucoItem>
     } else {
       return Promise.resolve([
         new SaucoItem(
-          'Documentation',
-          'View Sauco documentation',
-          vscode.TreeItemCollapsibleState.None,
-          {
-            command: 'sauco-de.helloWorld', // For now, using helloWorld command
-            title: 'Open Documentation'
-          }
-        ),
-        new SaucoItem(
           'Analyze Code',
           'Analyze current code',
           vscode.TreeItemCollapsibleState.None,

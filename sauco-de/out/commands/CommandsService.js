@@ -45,10 +45,6 @@ class CommandsService {
      * @param analysisViewProvider The analysis view provider
      */
     static registerCommands(context, analysisViewProvider) {
-        // Hello World command
-        const helloWorldDisposable = vscode.commands.registerCommand('sauco-de.helloWorld', () => {
-            vscode.window.showInformationMessage('Hello World from sauco-de!');
-        });
         // Configure command
         const configureDisposable = vscode.commands.registerCommand('sauco-de.configure', async () => {
             await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
@@ -63,7 +59,7 @@ class CommandsService {
             await this.showMetrics(analysisViewProvider);
         });
         // Add all commands to subscriptions
-        context.subscriptions.push(helloWorldDisposable, configureDisposable, analyzeCodeDisposable, showMetricsDisposable);
+        context.subscriptions.push(configureDisposable, analyzeCodeDisposable, showMetricsDisposable);
     }
     /**
      * Analyzes the code in the active editor

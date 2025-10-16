@@ -84,7 +84,6 @@ class SaucoAnalysisViewProvider {
         if (improvedCode) {
             this._improvedCode = improvedCode;
         }
-        // Store the analysis result for later use
         this._analysisResult = analysisResult || this._analysisResult;
         if (this._view) {
             this._view.webview.html = this._getHtmlForWebview(this._analysisResult, fileName);
@@ -102,10 +101,6 @@ class SaucoAnalysisViewProvider {
             vscode.window.showErrorMessage('No improved code available or no active editor found.');
             return;
         }
-        // Store current analysis content and metrics data
-        const metricsData = this._metricsData;
-        const improvedCode = this._improvedCode;
-        const analysisResult = this._analysisResult;
         const fileName = this._originalEditor.document.fileName ?
             path.basename(this._originalEditor.document.fileName) : 'code';
         const editor = this._originalEditor;
