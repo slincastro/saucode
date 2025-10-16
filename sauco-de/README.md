@@ -1,10 +1,12 @@
 # Sauco Extension for VS Code
 
-A Visual Studio Code extension for Sauco that provides configuration options for API integration.
+A Visual Studio Code extension for Sauco that provides configuration options for API integration, code analysis, and improvement suggestions.
 
 ## Features
 
 - Configuration panel to set the Sauco API URL
+- Code analysis with metrics visualization
+- Code improvement suggestions
 - Easy access to Sauco settings through VS Code commands
 
 ## Installation
@@ -39,6 +41,10 @@ This extension contributes the following settings:
 1. Clone the repository
 2. Run `npm install` to install dependencies
 3. Press F5 to launch the extension in a new VS Code window
+
+## Architecture
+
+This extension follows a layered architecture pattern for better maintainability and scalability. See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed information about the project structure and design patterns used.
 
 ## License
 
