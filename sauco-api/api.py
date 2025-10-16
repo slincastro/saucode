@@ -71,6 +71,7 @@ async def improve(req: ImproveRequest):
             metrics=metrics
         )
     except Exception as e:
+        print(f" Error 500 - {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/retrieve_context", response_model=RetrieveContextResponse)
