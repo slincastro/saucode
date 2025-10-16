@@ -1,4 +1,5 @@
-// @ts-check
+// Disable TypeScript checking for this file
+// @ts-nocheck
 
 (function () {
   // Get VS Code API

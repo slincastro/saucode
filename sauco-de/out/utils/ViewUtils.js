@@ -7,6 +7,164 @@ const MetricsService_1 = require("../services/metrics/MetricsService");
  */
 class ViewUtils {
     /**
+     * Formats metrics as a chart HTML
+     * @param originalMetrics The original metrics
+     * @param improvedMetrics The improved metrics
+     * @returns The HTML for the chart
+     */
+    static formatMetricsAsChartHtml(originalMetrics, improvedMetrics) {
+        // Create a metrics data object similar to the one used in the original implementation
+        const metricsData = {
+            before: {},
+            after: {}
+        };
+        // Create a map for easier lookup
+        const originalMetricsMap = new Map();
+        const improvedMetricsMap = new Map();
+        originalMetrics.metrics.forEach(m => originalMetricsMap.set(m.name, m));
+        improvedMetrics.metrics.forEach(m => improvedMetricsMap.set(m.name, m));
+        // Add common metrics to the data object
+        const commonMetrics = [
+            { name: 'Cyclomatic Complexity', key: 'cyclomatic_complexity' },
+            { name: 'Method Count', key: 'method_number' },
+            { name: 'If Statements', key: 'number_of_ifs' },
+            { name: 'Loops', key: 'number_of_loops' },
+            { name: 'Avg Method Size', key: 'average_method_size' }
+        ];
+        // Populate the metrics data object
+        for (const metric of commonMetrics) {
+            const originalMetric = originalMetricsMap.get(metric.name);
+            const improvedMetric = improvedMetricsMap.get(metric.name);
+            if (originalMetric) {
+                metricsData.before[metric.key] = originalMetric.value;
+            }
+            if (improvedMetric) {
+                metricsData.after[metric.key] = improvedMetric.value;
+            }
+        }
+        // If we don't have the specific metrics, use the first 5 metrics we find
+        if (Object.keys(metricsData.before).length === 0 || Object.keys(metricsData.after).length === 0) {
+            const metricNames = new Set();
+            originalMetrics.metrics.forEach(m => metricNames.add(m.name));
+            improvedMetrics.metrics.forEach(m => metricNames.add(m.name));
+            const metricArray = Array.from(metricNames).slice(0, 5);
+            metricArray.forEach((name, index) => {
+                const originalMetric = originalMetricsMap.get(name);
+                const improvedMetric = improvedMetricsMap.get(name);
+                if (originalMetric) {
+                    metricsData.before[`metric_${index}`] = originalMetric.value;
+                }
+                if (improvedMetric) {
+                    metricsData.after[`metric_${index}`] = improvedMetric.value;
+                }
+            });
+        }
+        return `
+      <div id="metrics-chart-container">
+        <h2>Metrics Comparison</h2>
+        <div class="chart-container">
+          <canvas id="metricsChart"></canvas>
+        </div>
+        <script>
+          // Use an immediately invoked function expression (IIFE) to initialize the chart
+          (function() {
+            // Wait for the DOM to be fully loaded
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', initChart);
+            } else {
+              // DOM already loaded, initialize chart immediately
+              initChart();
+            }
+            
+            function initChart() {
+              try {
+                console.log('Initializing chart...');
+                const metricsData = ${JSON.stringify(metricsData)};
+                
+                // Wait a small amount of time to ensure the canvas is in the DOM
+                setTimeout(function() {
+                  const canvas = document.getElementById('metricsChart');
+                  if (!canvas) {
+                    console.error('Canvas element not found');
+                    return;
+                  }
+                  
+                  const ctx = canvas.getContext('2d');
+                  if (!ctx) {
+                    console.error('Could not get 2d context from canvas');
+                    return;
+                  }
+                  
+                  // Create labels and datasets
+                  const labels = ['Methods', 'If Statements', 'Loops', 'Cyclomatic Complexity', 'Avg Method Size'];
+                  const beforeData = [
+                    metricsData.before.method_number || 0,
+                    metricsData.before.number_of_ifs || 0,
+                    metricsData.before.number_of_loops || 0,
+                    metricsData.before.cyclomatic_complexity || 0,
+                    metricsData.before.average_method_size || 0
+                  ];
+                  const afterData = [
+                    metricsData.after.method_number || 0,
+                    metricsData.after.number_of_ifs || 0,
+                    metricsData.after.number_of_loops || 0,
+                    metricsData.after.cyclomatic_complexity || 0,
+                    metricsData.after.average_method_size || 0
+                  ];
+                  
+                  console.log('Chart data:', { labels, beforeData, afterData });
+                  
+                  // Check if Chart is available
+                  if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                  }
+                  
+                  // Create the chart
+                  const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                      labels: labels,
+                      datasets: [
+                        {
+                          label: 'Before',
+                          data: beforeData,
+                          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                          borderColor: 'rgba(255, 99, 132, 1)',
+                          borderWidth: 1
+                        },
+                        {
+                          label: 'After',
+                          data: afterData,
+                          backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                          borderColor: 'rgba(54, 162, 235, 1)',
+                          borderWidth: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true
+                        }
+                      }
+                    }
+                  });
+                  
+                  console.log('Chart created successfully');
+                }, 100);
+              } catch (error) {
+                console.error('Error creating chart:', error);
+              }
+            }
+          })();
+        </script>
+      </div>
+    `;
+    }
+    /**
      * Formats metrics as HTML
      * @param metrics The metrics to format
      * @returns The HTML

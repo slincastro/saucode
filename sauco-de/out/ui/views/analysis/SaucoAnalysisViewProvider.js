@@ -127,12 +127,15 @@ class SaucoAnalysisViewProvider {
                 await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
                 const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
                 const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
+                const chartHtml = ViewUtils_1.ViewUtils.formatMetricsAsChartHtml(improvement.originalMetrics, improvement.improvedMetrics);
                 const buttonsHtml = this._getButtonsHtml();
+                console.log('Original metrics:', improvement.originalMetrics);
+                console.log('Improved metrics:', improvement.improvedMetrics);
                 this._view?.webview.postMessage({
                     type: 'updateContent',
                     fileName: fileName,
                     content: content,
-                    metricsHtml: metricsHtml,
+                    metricsHtml: metricsHtml + chartHtml,
                     buttonsHtml: buttonsHtml
                 });
             });
@@ -214,9 +217,10 @@ class SaucoAnalysisViewProvider {
       <html lang="en">
       <head>
         <meta charset="UTF-8">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="${styleMainUri}" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <title>Sauco Analysis</title>
       </head>
       <body>
