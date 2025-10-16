@@ -124,6 +124,7 @@ class SaucoAnalysisViewProvider {
                 const improvement = await ApiService_1.ApiService.getCodeImprovement(fileContent);
                 this._currentImprovement = improvement;
                 progress.report({ increment: 100 });
+                fileName = fileName.split(/[\\/]/).pop() || fileName;
                 await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
                 const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
                 const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
@@ -135,7 +136,7 @@ class SaucoAnalysisViewProvider {
                     type: 'updateContent',
                     fileName: fileName,
                     content: content,
-                    metricsHtml: metricsHtml + chartHtml,
+                    metricsHtml: chartHtml + metricsHtml,
                     buttonsHtml: buttonsHtml
                 });
             });
@@ -226,11 +227,12 @@ class SaucoAnalysisViewProvider {
       <body>
         <div class="container">
           <h1 id="file-name">Select a file to analyze</h1>
+          <div id="metrics" class="metrics"></div>
+          <div id="buttons"></div>
           <div id="content" class="content">
             <p>Select a file to analyze.</p>
           </div>
-          <div id="metrics" class="metrics"></div>
-          <div id="buttons"></div>
+
         </div>
         <script nonce="${nonce}" src="${scriptUri}"></script>
       </body>
