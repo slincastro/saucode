@@ -13,7 +13,6 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:sauco-de.configure",
-    "onCommand:sauco-de.helloWorld",
     "onCommand:sauco-de.analyzeCode",
     "onView:saucoView",
     "onView:saucoConfigView",
@@ -49,10 +48,6 @@
       ]
     },
     "commands": [
-      {
-        "command": "sauco-de.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "sauco-de.configure",
         "title": "Sauco: Configure Settings",
@@ -110,10 +105,6 @@
         {
           "command": "sauco-de.configure",
           "title": "Sauco: Configure Settings"
-        },
-        {
-          "command": "sauco-de.helloWorld",
-          "title": "Sauco: Hello World"
         },
         {
           "command": "sauco-de.analyzeCode",
