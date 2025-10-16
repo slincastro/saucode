@@ -120,25 +120,66 @@ class SaucoAnalysisViewProvider {
                 title: `Analyzing ${fileName}...`,
                 cancellable: false
             }, async (progress) => {
-                progress.report({ increment: 0 });
-                const improvement = await ApiService_1.ApiService.getCodeImprovement(fileContent);
-                this._currentImprovement = improvement;
-                progress.report({ increment: 100 });
-                fileName = fileName.split(/[\\/]/).pop() || fileName;
-                await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
-                const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
-                const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
-                const chartHtml = ViewUtils_1.ViewUtils.formatMetricsAsChartHtml(improvement.originalMetrics, improvement.improvedMetrics);
-                const buttonsHtml = this._getButtonsHtml();
-                console.log('Original metrics:', improvement.originalMetrics);
-                console.log('Improved metrics:', improvement.improvedMetrics);
-                this._view?.webview.postMessage({
-                    type: 'updateContent',
-                    fileName: fileName,
-                    content: content,
-                    metricsHtml: chartHtml + metricsHtml,
-                    buttonsHtml: buttonsHtml
-                });
+                // Initialize progress at 0%
+                progress.report({ increment: 0, message: "Starting analysis..." });
+                // Set up animated progress updates
+                let currentProgress = 0;
+                const maxProgress = 90; // Leave room for the final 10% when we get the result
+                const progressInterval = 300; // Update every 300ms
+                const progressStep = 1; // Increment by 1% each time
+                // Create an interval to animate the progress bar
+                const progressTimer = setInterval(() => {
+                    if (currentProgress < maxProgress) {
+                        // Gradually slow down the progress as we approach maxProgress
+                        const increment = Math.max(0.5, progressStep * (1 - currentProgress / maxProgress));
+                        currentProgress += increment;
+                        // Update the progress message with different stages
+                        let message = "Starting analysis...";
+                        if (currentProgress > 10)
+                            message = "Analyzing code structure...";
+                        if (currentProgress > 30)
+                            message = "Identifying improvement opportunities...";
+                        if (currentProgress > 50)
+                            message = "Generating optimized code...";
+                        if (currentProgress > 70)
+                            message = "Calculating metrics...";
+                        progress.report({
+                            increment: increment,
+                            message: message
+                        });
+                    }
+                }, progressInterval);
+                try {
+                    // Make the actual API call
+                    const improvement = await ApiService_1.ApiService.getCodeImprovement(fileContent);
+                    this._currentImprovement = improvement;
+                    // Clear the interval and complete the progress
+                    clearInterval(progressTimer);
+                    progress.report({
+                        increment: 100 - currentProgress,
+                        message: "Analysis complete!"
+                    });
+                    fileName = fileName.split(/[\\/]/).pop() || fileName;
+                    await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
+                    const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
+                    const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
+                    const chartHtml = ViewUtils_1.ViewUtils.formatMetricsAsChartHtml(improvement.originalMetrics, improvement.improvedMetrics);
+                    const buttonsHtml = this._getButtonsHtml();
+                    console.log('Original metrics:', improvement.originalMetrics);
+                    console.log('Improved metrics:', improvement.improvedMetrics);
+                    this._view?.webview.postMessage({
+                        type: 'updateContent',
+                        fileName: fileName,
+                        content: content,
+                        metricsHtml: chartHtml + metricsHtml,
+                        buttonsHtml: buttonsHtml
+                    });
+                }
+                catch (error) {
+                    // Make sure to clear the interval if there's an error
+                    clearInterval(progressTimer);
+                    throw error;
+                }
             });
         }
         catch (error) {
