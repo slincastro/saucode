@@ -107,7 +107,10 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
 
           progress.report({ increment: 100 });
 
-          const content = ViewUtils.formatImprovedCodeAsHtml(improvement.improvedCode);
+          await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
+
+          // Also update the webview with the side-by-side comparison
+          const content = ViewUtils.createSideBySideComparison(improvement.originalCode, improvement.improvedCode);
           const metricsHtml = ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
           const buttonsHtml = this._getButtonsHtml();
 
@@ -246,5 +249,66 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
+  }
+
+  /**
+   * Opens the improved code in a new text editor
+   * @param originalFileName The name of the original file
+   * @param improvedCode The improved code
+   */
+  private async _openImprovedCodeInEditor(originalFileName: string, improvedCode: string): Promise<void> {
+    try {
+      // Create a new untitled document with the improved code
+      const document = await vscode.workspace.openTextDocument({
+        content: improvedCode,
+        language: this._getLanguageIdFromFileName(originalFileName)
+      });
+      
+      // Show the document in a new editor
+      await vscode.window.showTextDocument(document, {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside
+      });
+      
+      // Set the document title to indicate it's the improved version
+      const fileName = originalFileName.split('/').pop() || originalFileName;
+      vscode.window.showInformationMessage(`Improved code for ${fileName} opened in a new editor`);
+    } catch (error) {
+      console.error('Error opening improved code in editor:', error);
+      vscode.window.showErrorMessage(`Error opening improved code: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Gets the language ID from a file name
+   * @param fileName The file name
+   * @returns The language ID
+   */
+  private _getLanguageIdFromFileName(fileName: string): string {
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    // Map file extensions to language IDs
+    const extensionToLanguage: Record<string, string> = {
+      'js': 'javascript',
+      'ts': 'typescript',
+      'jsx': 'javascriptreact',
+      'tsx': 'typescriptreact',
+      'html': 'html',
+      'css': 'css',
+      'json': 'json',
+      'py': 'python',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'cpp',
+      'cs': 'csharp',
+      'go': 'go',
+      'rb': 'ruby',
+      'php': 'php',
+      'rs': 'rust',
+      'swift': 'swift',
+      'md': 'markdown'
+    };
+    
+    return extensionToLanguage[extension] || 'plaintext';
   }
 }
