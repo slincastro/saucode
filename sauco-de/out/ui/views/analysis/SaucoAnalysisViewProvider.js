@@ -267,7 +267,7 @@ class SaucoAnalysisViewProvider {
       </head>
       <body>
         <div class="container">
-          <h1 id="file-name">Select a file to analyze</h1>
+          <h2 id="file-name">Select a file to analyze</h2>
           <div id="metrics" class="metrics"></div>
           <div id="buttons"></div>
           <div id="content" class="content">

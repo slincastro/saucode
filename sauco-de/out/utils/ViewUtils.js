@@ -268,7 +268,6 @@ class ViewUtils {
     static formatMetricsComparisonAsHtml(originalMetrics, improvedMetrics) {
         let html = `
       <div class="metrics-comparison">
-        <h2>Metrics Comparison</h2>
         <p>Overall Score: ${originalMetrics.overallScore.toFixed(2)} → ${improvedMetrics.overallScore.toFixed(2)}</p>
         <table>
           <thead>
