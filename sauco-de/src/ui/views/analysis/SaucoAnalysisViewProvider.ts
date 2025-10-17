@@ -14,6 +14,20 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
   private _currentImprovement?: CodeImprovement;
 
   /**
+   * Gets the current file name
+   */
+  public get currentFileName(): string {
+    return this._currentFileName;
+  }
+
+  /**
+   * Gets the current improvement
+   */
+  public get currentImprovement(): CodeImprovement | undefined {
+    return this._currentImprovement;
+  }
+
+  /**
    * Creates a new analysis view provider
    * @param extensionUri The URI of the extension
    */
@@ -197,7 +211,7 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
   /**
    * Applies the improved code to the file
    */
-  private async _applyImprovedCode(): Promise<void> {
+  public async _applyImprovedCode(): Promise<void> {
     if (!this._currentImprovement || !this._currentFileName) {
       return;
     }

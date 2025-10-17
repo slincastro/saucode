@@ -33,11 +33,17 @@ export class CommandsService {
       await this.showMetrics(analysisViewProvider);
     });
 
+    // Apply code command
+    const applyCodeDisposable = vscode.commands.registerCommand('sauco-de.applyCode', async () => {
+      await this.applyImprovedCode(analysisViewProvider);
+    });
+
     // Add all commands to subscriptions
     context.subscriptions.push(
       configureDisposable, 
       analyzeCodeDisposable,
-      showMetricsDisposable
+      showMetricsDisposable,
+      applyCodeDisposable
     );
   }
 
@@ -150,6 +156,35 @@ export class CommandsService {
       }
       
       vscode.window.showErrorMessage(errorMessage);
+    }
+  }
+
+  /**
+   * Applies the improved code to the current file
+   * @param analysisViewProvider The analysis view provider
+   */
+  private static async applyImprovedCode(analysisViewProvider: any): Promise<void> {
+    try {
+      // Log the current state for debugging
+      console.log('Current improvement:', analysisViewProvider.currentImprovement);
+      console.log('Current file name:', analysisViewProvider.currentFileName);
+      
+      // Check if there's a current improvement
+      if (!analysisViewProvider.currentImprovement) {
+        vscode.window.showInformationMessage('No code improvements available. Please analyze code first.');
+        return;
+      }
+      
+      if (!analysisViewProvider.currentFileName) {
+        vscode.window.showInformationMessage('No file selected for improvement. Please analyze a file first.');
+        return;
+      }
+
+      // Call the internal method to apply the improved code
+      await analysisViewProvider._applyImprovedCode();
+    } catch (error) {
+      console.error('Error applying improved code:', error);
+      vscode.window.showErrorMessage(`Error applying improved code: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

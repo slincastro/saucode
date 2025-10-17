@@ -58,8 +58,12 @@ class CommandsService {
         const showMetricsDisposable = vscode.commands.registerCommand('sauco-de.showMetrics', async () => {
             await this.showMetrics(analysisViewProvider);
         });
+        // Apply code command
+        const applyCodeDisposable = vscode.commands.registerCommand('sauco-de.applyCode', async () => {
+            await this.applyImprovedCode(analysisViewProvider);
+        });
         // Add all commands to subscriptions
-        context.subscriptions.push(configureDisposable, analyzeCodeDisposable, showMetricsDisposable);
+        context.subscriptions.push(configureDisposable, analyzeCodeDisposable, showMetricsDisposable, applyCodeDisposable);
     }
     /**
      * Analyzes the code in the active editor
@@ -155,6 +159,32 @@ class CommandsService {
                 errorMessage = `Error calculating metrics: ${error instanceof Error ? error.message : String(error)}`;
             }
             vscode.window.showErrorMessage(errorMessage);
+        }
+    }
+    /**
+     * Applies the improved code to the current file
+     * @param analysisViewProvider The analysis view provider
+     */
+    static async applyImprovedCode(analysisViewProvider) {
+        try {
+            // Log the current state for debugging
+            console.log('Current improvement:', analysisViewProvider.currentImprovement);
+            console.log('Current file name:', analysisViewProvider.currentFileName);
+            // Check if there's a current improvement
+            if (!analysisViewProvider.currentImprovement) {
+                vscode.window.showInformationMessage('No code improvements available. Please analyze code first.');
+                return;
+            }
+            if (!analysisViewProvider.currentFileName) {
+                vscode.window.showInformationMessage('No file selected for improvement. Please analyze a file first.');
+                return;
+            }
+            // Call the internal method to apply the improved code
+            await analysisViewProvider._applyImprovedCode();
+        }
+        catch (error) {
+            console.error('Error applying improved code:', error);
+            vscode.window.showErrorMessage(`Error applying improved code: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

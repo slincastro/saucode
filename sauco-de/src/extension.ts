@@ -83,6 +83,12 @@ export function activate(context: vscode.ExtensionContext) {
 	metricsStatusBarItem.tooltip = "Show code metrics";
 	metricsStatusBarItem.show();
 	
+	const applyCodeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 103);
+	applyCodeStatusBarItem.command = 'sauco-de.applyCode';
+	applyCodeStatusBarItem.text = "$(check) Apply";
+	applyCodeStatusBarItem.tooltip = "Apply improved code";
+	applyCodeStatusBarItem.show();
+	
 	// Update status bar with current API URL
 	function updateStatusBar() {
 		const config = vscode.workspace.getConfiguration('sauco-de');
@@ -109,7 +115,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		configStatusBarItem,
 		analyzeStatusBarItem,
-		metricsStatusBarItem
+		metricsStatusBarItem,
+		applyCodeStatusBarItem
 	);
 }
 

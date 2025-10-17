@@ -92,6 +92,11 @@ function activate(context) {
     metricsStatusBarItem.text = "$(graph) Metrics";
     metricsStatusBarItem.tooltip = "Show code metrics";
     metricsStatusBarItem.show();
+    const applyCodeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 103);
+    applyCodeStatusBarItem.command = 'sauco-de.applyCode';
+    applyCodeStatusBarItem.text = "$(check) Apply";
+    applyCodeStatusBarItem.tooltip = "Apply improved code";
+    applyCodeStatusBarItem.show();
     // Update status bar with current API URL
     function updateStatusBar() {
         const config = vscode.workspace.getConfiguration('sauco-de');
@@ -111,7 +116,7 @@ function activate(context) {
         }
     }));
     // Add status bar items to subscriptions
-    context.subscriptions.push(configStatusBarItem, analyzeStatusBarItem, metricsStatusBarItem);
+    context.subscriptions.push(configStatusBarItem, analyzeStatusBarItem, metricsStatusBarItem, applyCodeStatusBarItem);
 }
 /**
  * Calculates metrics for a document and displays them in the analysis view

@@ -48,6 +48,18 @@ class SaucoAnalysisViewProvider {
     _currentFileName = '';
     _currentImprovement;
     /**
+     * Gets the current file name
+     */
+    get currentFileName() {
+        return this._currentFileName;
+    }
+    /**
+     * Gets the current improvement
+     */
+    get currentImprovement() {
+        return this._currentImprovement;
+    }
+    /**
      * Creates a new analysis view provider
      * @param extensionUri The URI of the extension
      */
