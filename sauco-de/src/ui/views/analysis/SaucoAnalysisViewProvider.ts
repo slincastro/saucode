@@ -65,7 +65,8 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (data) => {
       switch (data.type) {
         case 'applyCode':
-          await this._applyImprovedCode();
+          // Execute the sauco-de.applyCode command instead of calling the internal method
+          await vscode.commands.executeCommand('sauco-de.applyCode');
           break;
         case 'closeImprovedCode':
           this._clearContent();
