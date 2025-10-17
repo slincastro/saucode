@@ -26,8 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(SaucoAnalysisViewProvider.viewType, saucoAnalysisViewProvider)
 	);
 	
-	// Make the analysis view provider globally accessible
+	// Make the analysis view provider and other important variables globally accessible
 	(global as any).saucoAnalysisViewProvider = saucoAnalysisViewProvider;
+	(global as any).lastAnalyzedDocument = null; // Store the last analyzed document
 	
 	// Register commands
 	CommandsService.registerCommands(context, saucoAnalysisViewProvider);

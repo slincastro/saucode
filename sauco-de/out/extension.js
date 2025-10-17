@@ -52,8 +52,9 @@ function activate(context) {
     // Register analysis view
     const saucoAnalysisViewProvider = new SaucoAnalysisViewProvider_1.SaucoAnalysisViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(SaucoAnalysisViewProvider_1.SaucoAnalysisViewProvider.viewType, saucoAnalysisViewProvider));
-    // Make the analysis view provider globally accessible
+    // Make the analysis view provider and other important variables globally accessible
     global.saucoAnalysisViewProvider = saucoAnalysisViewProvider;
+    global.lastAnalyzedDocument = null; // Store the last analyzed document
     // Register commands
     CommandsService_1.CommandsService.registerCommands(context, saucoAnalysisViewProvider);
     // Add event listener for editor closing to ensure analysis view stays visible

@@ -28,6 +28,15 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Sets the current improvement
+   * @param improvement The improvement to set
+   */
+  public setCurrentImprovement(improvement: CodeImprovement): void {
+    console.log('Setting current improvement:', improvement);
+    this._currentImprovement = improvement;
+  }
+
+  /**
    * Creates a new analysis view provider
    * @param extensionUri The URI of the extension
    */
@@ -212,29 +221,113 @@ export class SaucoAnalysisViewProvider implements vscode.WebviewViewProvider {
    * Applies the improved code to the file
    */
   public async _applyImprovedCode(): Promise<void> {
-    if (!this._currentImprovement || !this._currentFileName) {
+    if (!this._currentImprovement) {
       return;
     }
 
     try {
-      const document = await vscode.workspace.openTextDocument(this._currentFileName);
-      const edit = new vscode.WorkspaceEdit();
+      // First try to use the last analyzed document from global state
+      const lastAnalyzedDocument = (global as any).lastAnalyzedDocument;
+      vscode.window.showInformationMessage(`Last document ${lastAnalyzedDocument.fileName}`);
+      vscode.window.showInformationMessage(`Current document ${this._currentImprovement}`);
+
+
+      if (lastAnalyzedDocument) {
+        vscode.window.showInformationMessage(` LAD Using last analyzed document: replacing ${this._currentImprovement} in ${lastAnalyzedDocument.fileName}`);
+        console.log('Using last analyzed document:', lastAnalyzedDocument.fileName);
+        
+        try {
+          // Create an edit for the last analyzed document
+          const edit = new vscode.WorkspaceEdit();
+          
+          // Replace the entire content of the file
+          const fullRange = new vscode.Range(
+            lastAnalyzedDocument.positionAt(0),
+            lastAnalyzedDocument.positionAt(lastAnalyzedDocument.getText().length)
+          );
+          
+          edit.replace(lastAnalyzedDocument.uri, fullRange, this._currentImprovement.improvedCode);
+          
+          const success = await vscode.workspace.applyEdit(edit);
+          
+          if (success) {
+            vscode.window.showInformationMessage(`Successfully applied improvements to ${lastAnalyzedDocument.fileName}`);
+            this._clearContent();
+            return; // Exit early if successful
+          } else {
+            console.error('Failed to apply edit to last analyzed document');
+            // Continue to next approach
+          }
+        } catch (lastDocError) {
+          console.error('Error applying to last analyzed document:', lastDocError);
+          // Continue to next approach
+        }
+      }
       
-      // Replace the entire content of the file
-      const fullRange = new vscode.Range(
-        document.positionAt(0),
-        document.positionAt(document.getText().length)
-      );
+      // If we have a filename, try to open that file
+      if (this._currentFileName) {
+        vscode.window.showInformationMessage(` CF Using last analyzed document: replacing ${this._currentImprovement} in ${lastAnalyzedDocument.fileName}`);
+
+        try {
+          // Use URI to handle the file path properly
+          const fileUri = vscode.Uri.file(this._currentFileName);
+          console.log('Attempting to open file with URI:', fileUri.toString());
+          
+          // Try to open the document
+          const document = await vscode.workspace.openTextDocument(fileUri);
+          const edit = new vscode.WorkspaceEdit();
+          
+          // Replace the entire content of the file
+          const fullRange = new vscode.Range(
+            document.positionAt(0),
+            document.positionAt(document.getText().length)
+          );
+          
+          edit.replace(lastAnalyzedDocument.uri, fullRange, this._currentImprovement.improvedCode);
+          
+          const success = await vscode.workspace.applyEdit(edit);
+          
+          if (success) {
+            vscode.window.showInformationMessage(`Successfully applied improvements to ${this._currentFileName}`);
+            this._clearContent();
+            return; // Exit early if successful
+          } else {
+            console.error('Failed to apply edit to file');
+            // Continue to next approach
+          }
+        } catch (fileError) {
+          console.error('Error opening file:', fileError);
+          // Continue to next approach
+        }
+      }
       
-      edit.replace(document.uri, fullRange, this._currentImprovement.improvedCode);
-      
-      const success = await vscode.workspace.applyEdit(edit);
-      
-      if (success) {
-        vscode.window.showInformationMessage(`Successfully applied improvements to ${this._currentFileName}`);
-        this._clearContent();
+      // As a last resort, try to use the active editor
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        console.log('Using active editor as last resort');
+        vscode.window.showInformationMessage(` E Using last analyzed document: replacing ${this._currentImprovement} in ${lastAnalyzedDocument.fileName}`);
+
+        // Create an edit for the active editor
+        const edit = new vscode.WorkspaceEdit();
+        
+        // Replace the entire content of the file
+        const fullRange = new vscode.Range(
+          editor.document.positionAt(0),
+          editor.document.positionAt(editor.document.getText().length)
+        );
+        
+        edit.replace(lastAnalyzedDocument.uri, fullRange, this._currentImprovement.improvedCode);
+        
+        const success = await vscode.workspace.applyEdit(edit);
+        
+        if (success) {
+          vscode.window.showInformationMessage(`Successfully applied improvements to active file`);
+          this._clearContent();
+        } else {
+          vscode.window.showErrorMessage(`Failed to apply improvements to active file`);
+        }
       } else {
-        vscode.window.showErrorMessage(`Failed to apply improvements to ${this._currentFileName}`);
+        throw new Error(`Cannot apply improvements. No valid document found.`);
       }
     } catch (error) {
       console.error('Error applying improved code:', error);

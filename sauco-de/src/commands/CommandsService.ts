@@ -66,6 +66,10 @@ export class CommandsService {
     
     const fileName = editor.document.fileName;
     
+    // Store the document reference for the analyze command
+    // This ensures lastAnalyzedDocument is only updated when analyze is executed
+    (global as any).lastAnalyzedDocument = editor.document;
+    
     // Show what's being analyzed
     console.log('Analyzing code selection:', selection.isEmpty ? 'Entire document' : 'Selected text');
     
@@ -84,8 +88,28 @@ export class CommandsService {
       await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
       await vscode.commands.executeCommand('saucoAnalysisView.focus');
       
+      // Get the global provider
+      const globalAnalysisViewProvider = (global as any).saucoAnalysisViewProvider;
+      
       // Show the analysis in the view
       await analysisViewProvider.showAnalysis(fileName, code);
+      
+      // Get the improvement directly from the API
+      try {
+        const improvement = await ApiService.getCodeImprovement(code);
+        console.log('Got improvement directly from API:', improvement);
+        
+        // Set the improvement on both providers to ensure it's available
+        if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+          globalAnalysisViewProvider.setCurrentImprovement(improvement);
+        }
+        
+        if (analysisViewProvider.setCurrentImprovement) {
+          analysisViewProvider.setCurrentImprovement(improvement);
+        }
+      } catch (innerError) {
+        console.error('Error getting improvement directly:', innerError);
+      }
     } catch (error) {
       console.error('Error analyzing code:', error);
       
@@ -165,26 +189,136 @@ export class CommandsService {
    */
   private static async applyImprovedCode(analysisViewProvider: any): Promise<void> {
     try {
-      // Log the current state for debugging
-      console.log('Current improvement:', analysisViewProvider.currentImprovement);
-      console.log('Current file name:', analysisViewProvider.currentFileName);
+      // Use the global variable instead of the passed parameter
+      const globalAnalysisViewProvider = (global as any).saucoAnalysisViewProvider;
+      const lastAnalyzedDocument = (global as any).lastAnalyzedDocument;
       
-      // Check if there's a current improvement
-      if (!analysisViewProvider.currentImprovement) {
-        vscode.window.showInformationMessage('No code improvements available. Please analyze code first.');
-        return;
+      // Enhanced debugging
+      console.log('Global analysis provider exists:', !!globalAnalysisViewProvider);
+      console.log('Passed analysis provider exists:', !!analysisViewProvider);
+      console.log('Last analyzed document exists:', !!lastAnalyzedDocument);
+      
+      // Compare the two providers
+      console.log('Are providers the same object?', globalAnalysisViewProvider === analysisViewProvider);
+      
+      // Log all properties of the global provider
+      console.log('Global provider properties:', Object.keys(globalAnalysisViewProvider));
+      
+      // Log the current state for debugging
+      console.log('Current improvement (global):', globalAnalysisViewProvider._currentImprovement);
+      console.log('Current file name (global):', globalAnalysisViewProvider._currentFileName);
+      console.log('Current improvement (passed):', analysisViewProvider._currentImprovement);
+      console.log('Current file name (passed):', analysisViewProvider._currentFileName);
+      
+      // Try both providers
+      const provider = globalAnalysisViewProvider || analysisViewProvider;
+      
+      // If we don't have an improvement, try to get it from the last analyzed document or active editor
+      if (!provider._currentImprovement) {
+        // First try to use the last analyzed document
+        if (lastAnalyzedDocument) {
+          try {
+            const code = lastAnalyzedDocument.getText();
+            const fileName = lastAnalyzedDocument.fileName;
+            
+            console.log('Trying to get improvement for last analyzed file:', fileName);
+            
+            // Get the improvement directly from the API
+            const improvement = await ApiService.getCodeImprovement(code);
+            console.log('Got improvement directly from API for last analyzed document:', improvement);
+            
+            // Set the improvement on both providers
+            if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+              globalAnalysisViewProvider.setCurrentImprovement(improvement);
+              globalAnalysisViewProvider._currentFileName = fileName;
+            }
+            
+            if (analysisViewProvider.setCurrentImprovement) {
+              analysisViewProvider.setCurrentImprovement(improvement);
+              analysisViewProvider._currentFileName = fileName;
+            }
+            
+            // Update the provider reference
+            provider._currentImprovement = improvement;
+            provider._currentFileName = fileName;
+          } catch (innerError) {
+            console.error('Error getting improvement for last analyzed file:', innerError);
+            // Fall back to active editor if last analyzed document fails
+            await this._tryGetImprovementFromActiveEditor(provider, globalAnalysisViewProvider, analysisViewProvider);
+          }
+        } else {
+          // Fall back to active editor if no last analyzed document
+          await this._tryGetImprovementFromActiveEditor(provider, globalAnalysisViewProvider, analysisViewProvider);
+        }
       }
       
-      if (!analysisViewProvider.currentFileName) {
+      if (!provider._currentFileName) {
         vscode.window.showInformationMessage('No file selected for improvement. Please analyze a file first.');
         return;
       }
 
-      // Call the internal method to apply the improved code
-      await analysisViewProvider._applyImprovedCode();
+      // Try to use both methods to apply the code
+      try {
+        // First try the global provider
+        console.log('Attempting to apply code with global provider...');
+        await globalAnalysisViewProvider._applyImprovedCode();
+      } catch (innerError) {
+        console.error('Error with global provider, trying passed provider:', innerError);
+        // If that fails, try the passed provider
+        await analysisViewProvider._applyImprovedCode();
+      }
     } catch (error) {
       console.error('Error applying improved code:', error);
       vscode.window.showErrorMessage(`Error applying improved code: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Tries to get an improvement from the active editor
+   * @param provider The provider to update
+   * @param globalAnalysisViewProvider The global analysis view provider
+   * @param analysisViewProvider The passed analysis view provider
+   * @returns A promise that resolves when the operation is complete
+   */
+  private static async _tryGetImprovementFromActiveEditor(
+    provider: any, 
+    globalAnalysisViewProvider: any, 
+    analysisViewProvider: any
+  ): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      try {
+        const code = editor.document.getText();
+        const fileName = editor.document.fileName;
+        
+        console.log('Trying to get improvement for current file:', fileName);
+        
+        // Get the improvement directly from the API
+        const improvement = await ApiService.getCodeImprovement(code);
+        console.log('Got improvement directly from API:', improvement);
+        
+        // Set the improvement on both providers
+        if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+          globalAnalysisViewProvider.setCurrentImprovement(improvement);
+          globalAnalysisViewProvider._currentFileName = fileName;
+        }
+        
+        if (analysisViewProvider.setCurrentImprovement) {
+          analysisViewProvider.setCurrentImprovement(improvement);
+          analysisViewProvider._currentFileName = fileName;
+        }
+        
+        // Update the provider reference
+        provider._currentImprovement = improvement;
+        provider._currentFileName = fileName;
+      } catch (innerError) {
+        console.error('Error getting improvement for current file:', innerError);
+        vscode.window.showInformationMessage('No code improvements available. Please analyze code first.');
+        throw innerError; // Re-throw to signal failure
+      }
+    } else {
+      vscode.window.showInformationMessage('No code improvements available. Please analyze code first.');
+      throw new Error('No active editor available');
     }
   }
 }
