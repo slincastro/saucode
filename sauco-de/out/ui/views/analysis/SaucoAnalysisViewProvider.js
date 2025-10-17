@@ -260,12 +260,34 @@ class SaucoAnalysisViewProvider {
                     if (globalStore) {
                         const analysisData = globalStore.getAnalysisDataByPath(lastAnalyzedDocument.fileName);
                         if (analysisData && analysisData.improvedCodeDocumentUri) {
-                            // Find all editors showing the improved code document
-                            const editorsToClose = vscode.window.visibleTextEditors.filter(editor => editor.document.uri.toString() === analysisData.improvedCodeDocumentUri?.toString());
-                            // Close each editor showing the improved code
-                            for (const editor of editorsToClose) {
-                                await vscode.window.showTextDocument(editor.document, { preview: true });
-                                await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                            try {
+                                // Find all editors showing the improved code document
+                                const editorsToClose = vscode.window.visibleTextEditors.filter(editor => editor.document.uri.toString() === analysisData.improvedCodeDocumentUri?.toString());
+                                // Close each editor showing the improved code
+                                for (const editor of editorsToClose) {
+                                    await vscode.window.showTextDocument(editor.document, { preview: true });
+                                    // Use the closeEditor command with the forceClose flag to avoid save prompts
+                                    await vscode.commands.executeCommand('workbench.action.closeActiveEditor', {
+                                        skipSave: true
+                                    });
+                                }
+                                // Delete the temporary file if it exists
+                                try {
+                                    const fs = require('fs');
+                                    const tempFilePath = analysisData.improvedCodeDocumentUri.fsPath;
+                                    if (fs.existsSync(tempFilePath)) {
+                                        fs.unlinkSync(tempFilePath);
+                                        console.log(`Deleted temporary file: ${tempFilePath}`);
+                                    }
+                                }
+                                catch (fsError) {
+                                    console.error('Error deleting temporary file:', fsError);
+                                    // Continue even if file deletion fails
+                                }
+                            }
+                            catch (closeError) {
+                                console.error('Error closing improved code editor:', closeError);
+                                // Continue even if closing fails
                             }
                         }
                     }
@@ -355,18 +377,36 @@ class SaucoAnalysisViewProvider {
      */
     async _openImprovedCodeInEditor(originalFileName, improvedCode) {
         try {
-            // Create a new untitled document with the improved code
-            const document = await vscode.workspace.openTextDocument({
-                content: improvedCode,
-                language: this._getLanguageIdFromFileName(originalFileName)
-            });
+            // Create a temporary file in the system temp directory
+            const os = require('os');
+            const fs = require('fs');
+            const path = require('path');
+            const crypto = require('crypto');
+            // Generate a unique filename based on the original filename and a random hash
+            const fileName = originalFileName.split(/[\\/]/).pop() || originalFileName;
+            const fileExtension = path.extname(fileName);
+            const fileBaseName = path.basename(fileName, fileExtension);
+            const randomHash = crypto.randomBytes(4).toString('hex');
+            const tempFileName = `${fileBaseName}_improved_${randomHash}${fileExtension}`;
+            // Create the temp file path
+            const tempFilePath = path.join(os.tmpdir(), 'sauco-de', tempFileName);
+            // Ensure the directory exists
+            const tempDir = path.dirname(tempFilePath);
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            // Write the improved code to the temp file
+            fs.writeFileSync(tempFilePath, improvedCode);
+            // Create a URI for the temp file
+            const tempFileUri = vscode.Uri.file(tempFilePath);
+            // Open the temp file in the editor
+            const document = await vscode.workspace.openTextDocument(tempFileUri);
             // Show the document in a new editor
             await vscode.window.showTextDocument(document, {
                 preview: false,
                 viewColumn: vscode.ViewColumn.Beside
             });
             // Set the document title to indicate it's the improved version
-            const fileName = originalFileName.split('/').pop() || originalFileName;
             vscode.window.showInformationMessage(`Improved code for ${fileName} opened in a new editor`);
             // Return the document URI for storage in the global store
             return document.uri;
