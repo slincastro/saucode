@@ -6,6 +6,62 @@ import { CommandsService } from './commands/CommandsService';
 import { MetricsService } from './services/metrics/MetricsService';
 import { Metric } from './models/MetricModels';
 import { CognitiveComplexityMetric } from './services/metrics/CognitiveComplexityMetric';
+import { CodeImprovement } from './models/ApiModels';
+
+/**
+ * Interface for the file analysis data stored in the global store
+ */
+interface FileAnalysisData {
+  filePath: string;
+  fileName: string;
+  improvement: CodeImprovement;
+  documentUri?: vscode.Uri;
+  improvedCodeDocumentUri?: vscode.Uri;
+  timestamp: number;
+}
+
+/**
+ * Global store for file analysis data
+ */
+interface SaucoGlobalStore {
+  analysisData: Map<string, FileAnalysisData>;
+  
+  /**
+   * Adds or updates analysis data for a file
+   * @param filePath The full path of the analyzed file
+   * @param fileName The name of the analyzed file
+   * @param improvement The code improvement data
+   * @param documentUri The URI of the original document
+   * @param improvedCodeDocumentUri The URI of the document with improved code
+   */
+  addAnalysisData(
+    filePath: string, 
+    fileName: string, 
+    improvement: CodeImprovement, 
+    documentUri?: vscode.Uri,
+    improvedCodeDocumentUri?: vscode.Uri
+  ): void;
+  
+  /**
+   * Gets analysis data for a file by path
+   * @param filePath The path of the file
+   * @returns The analysis data or undefined if not found
+   */
+  getAnalysisDataByPath(filePath: string): FileAnalysisData | undefined;
+  
+  /**
+   * Gets analysis data for a file by name
+   * @param fileName The name of the file
+   * @returns An array of analysis data for files with the given name
+   */
+  getAnalysisDataByName(fileName: string): FileAnalysisData[];
+  
+  /**
+   * Gets all analysis data
+   * @returns An array of all analysis data
+   */
+  getAllAnalysisData(): FileAnalysisData[];
+}
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "sauco-de" is now active!');
@@ -26,9 +82,46 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(SaucoAnalysisViewProvider.viewType, saucoAnalysisViewProvider)
 	);
 	
+	// Create the global store for file analysis data
+	const saucoGlobalStore: SaucoGlobalStore = {
+		analysisData: new Map<string, FileAnalysisData>(),
+		
+		addAnalysisData(
+			filePath: string, 
+			fileName: string, 
+			improvement: CodeImprovement, 
+			documentUri?: vscode.Uri,
+			improvedCodeDocumentUri?: vscode.Uri
+		): void {
+			this.analysisData.set(filePath, {
+				filePath,
+				fileName,
+				improvement,
+				documentUri,
+				improvedCodeDocumentUri,
+				timestamp: Date.now()
+			});
+			console.log(`Added analysis data for ${fileName} (${filePath})`);
+		},
+		
+		getAnalysisDataByPath(filePath: string): FileAnalysisData | undefined {
+			return this.analysisData.get(filePath);
+		},
+		
+		getAnalysisDataByName(fileName: string): FileAnalysisData[] {
+			return Array.from(this.analysisData.values())
+				.filter(data => data.fileName === fileName || data.fileName.endsWith(`/${fileName}`) || data.fileName.endsWith(`\\${fileName}`));
+		},
+		
+		getAllAnalysisData(): FileAnalysisData[] {
+			return Array.from(this.analysisData.values());
+		}
+	};
+	
 	// Make the analysis view provider and other important variables globally accessible
 	(global as any).saucoAnalysisViewProvider = saucoAnalysisViewProvider;
 	(global as any).lastAnalyzedDocument = null; // Store the last analyzed document
+	(global as any).saucoGlobalStore = saucoGlobalStore; // Store the global store
 	
 	// Register commands
 	CommandsService.registerCommands(context, saucoAnalysisViewProvider);
@@ -90,6 +183,12 @@ export function activate(context: vscode.ExtensionContext) {
 	applyCodeStatusBarItem.tooltip = "Apply improved code";
 	applyCodeStatusBarItem.show();
 	
+	const historyStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 104);
+	historyStatusBarItem.command = 'sauco-de.getAnalysisData';
+	historyStatusBarItem.text = "$(history) History";
+	historyStatusBarItem.tooltip = "View analysis history";
+	historyStatusBarItem.show();
+	
 	// Update status bar with current API URL
 	function updateStatusBar() {
 		const config = vscode.workspace.getConfiguration('sauco-de');
@@ -117,7 +216,8 @@ export function activate(context: vscode.ExtensionContext) {
 		configStatusBarItem,
 		analyzeStatusBarItem,
 		metricsStatusBarItem,
-		applyCodeStatusBarItem
+		applyCodeStatusBarItem,
+		historyStatusBarItem
 	);
 }
 

@@ -180,9 +180,19 @@ class SaucoAnalysisViewProvider {
                         increment: 100 - currentProgress,
                         message: "Analysis complete!"
                     });
-                    fileName = fileName.split(/[\\/]/).pop() || fileName;
-                    await this._openImprovedCodeInEditor(fileName, improvement.improvedCode);
-                    const content = `<p>Code improvement analysis for ${fileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
+                    // Get the original file path from the last analyzed document
+                    const lastAnalyzedDocument = global.lastAnalyzedDocument;
+                    const originalFilePath = lastAnalyzedDocument ? lastAnalyzedDocument.fileName : fileName;
+                    // Extract just the file name for display
+                    const displayFileName = fileName.split(/[\\/]/).pop() || fileName;
+                    // Open the improved code in a new editor and get the document URI
+                    const improvedCodeDocumentUri = await this._openImprovedCodeInEditor(displayFileName, improvement.improvedCode);
+                    // Store the analysis data in the global store
+                    if (global.saucoGlobalStore) {
+                        global.saucoGlobalStore.addAnalysisData(originalFilePath, displayFileName, improvement, lastAnalyzedDocument ? lastAnalyzedDocument.uri : undefined, improvedCodeDocumentUri);
+                        console.log(`Stored analysis data for ${displayFileName} in global store`);
+                    }
+                    const content = `<p>Code improvement analysis for ${displayFileName}</p><p>${improvement.explanation || 'Analysis complete.'}</p>`;
                     const metricsHtml = ViewUtils_1.ViewUtils.formatMetricsComparisonAsHtml(improvement.originalMetrics, improvement.improvedMetrics);
                     const chartHtml = ViewUtils_1.ViewUtils.formatMetricsAsChartHtml(improvement.originalMetrics, improvement.improvedMetrics);
                     const buttonsHtml = this._getButtonsHtml();
@@ -190,7 +200,7 @@ class SaucoAnalysisViewProvider {
                     console.log('Improved metrics:', improvement.improvedMetrics);
                     this._view?.webview.postMessage({
                         type: 'updateContent',
-                        fileName: fileName,
+                        fileName: displayFileName,
                         content: content,
                         metricsHtml: chartHtml + metricsHtml,
                         buttonsHtml: buttonsHtml
@@ -235,6 +245,7 @@ class SaucoAnalysisViewProvider {
         try {
             // First try to use the last analyzed document from global state
             const lastAnalyzedDocument = global.lastAnalyzedDocument;
+            const globalStore = global.saucoGlobalStore;
             console.log('Using last analyzed document:', lastAnalyzedDocument.fileName);
             try {
                 // Create an edit for the last analyzed document
@@ -245,6 +256,19 @@ class SaucoAnalysisViewProvider {
                 const success = await vscode.workspace.applyEdit(edit);
                 if (success) {
                     vscode.window.showInformationMessage(`Successfully applied improvements to ${lastAnalyzedDocument.fileName}`);
+                    // Find and close the editor with the improved code
+                    if (globalStore) {
+                        const analysisData = globalStore.getAnalysisDataByPath(lastAnalyzedDocument.fileName);
+                        if (analysisData && analysisData.improvedCodeDocumentUri) {
+                            // Find all editors showing the improved code document
+                            const editorsToClose = vscode.window.visibleTextEditors.filter(editor => editor.document.uri.toString() === analysisData.improvedCodeDocumentUri?.toString());
+                            // Close each editor showing the improved code
+                            for (const editor of editorsToClose) {
+                                await vscode.window.showTextDocument(editor.document, { preview: true });
+                                await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                            }
+                        }
+                    }
                     this._clearContent();
                     return; // Exit early if successful
                 }
@@ -327,6 +351,7 @@ class SaucoAnalysisViewProvider {
      * Opens the improved code in a new text editor
      * @param originalFileName The name of the original file
      * @param improvedCode The improved code
+     * @returns The URI of the document with the improved code, or undefined if there was an error
      */
     async _openImprovedCodeInEditor(originalFileName, improvedCode) {
         try {
@@ -343,10 +368,13 @@ class SaucoAnalysisViewProvider {
             // Set the document title to indicate it's the improved version
             const fileName = originalFileName.split('/').pop() || originalFileName;
             vscode.window.showInformationMessage(`Improved code for ${fileName} opened in a new editor`);
+            // Return the document URI for storage in the global store
+            return document.uri;
         }
         catch (error) {
             console.error('Error opening improved code in editor:', error);
             vscode.window.showErrorMessage(`Error opening improved code: ${error instanceof Error ? error.message : String(error)}`);
+            return undefined;
         }
     }
     /**

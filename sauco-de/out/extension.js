@@ -52,9 +52,35 @@ function activate(context) {
     // Register analysis view
     const saucoAnalysisViewProvider = new SaucoAnalysisViewProvider_1.SaucoAnalysisViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(SaucoAnalysisViewProvider_1.SaucoAnalysisViewProvider.viewType, saucoAnalysisViewProvider));
+    // Create the global store for file analysis data
+    const saucoGlobalStore = {
+        analysisData: new Map(),
+        addAnalysisData(filePath, fileName, improvement, documentUri, improvedCodeDocumentUri) {
+            this.analysisData.set(filePath, {
+                filePath,
+                fileName,
+                improvement,
+                documentUri,
+                improvedCodeDocumentUri,
+                timestamp: Date.now()
+            });
+            console.log(`Added analysis data for ${fileName} (${filePath})`);
+        },
+        getAnalysisDataByPath(filePath) {
+            return this.analysisData.get(filePath);
+        },
+        getAnalysisDataByName(fileName) {
+            return Array.from(this.analysisData.values())
+                .filter(data => data.fileName === fileName || data.fileName.endsWith(`/${fileName}`) || data.fileName.endsWith(`\\${fileName}`));
+        },
+        getAllAnalysisData() {
+            return Array.from(this.analysisData.values());
+        }
+    };
     // Make the analysis view provider and other important variables globally accessible
     global.saucoAnalysisViewProvider = saucoAnalysisViewProvider;
     global.lastAnalyzedDocument = null; // Store the last analyzed document
+    global.saucoGlobalStore = saucoGlobalStore; // Store the global store
     // Register commands
     CommandsService_1.CommandsService.registerCommands(context, saucoAnalysisViewProvider);
     // Add event listener for editor closing to ensure analysis view stays visible
@@ -98,6 +124,11 @@ function activate(context) {
     applyCodeStatusBarItem.text = "$(check) Apply";
     applyCodeStatusBarItem.tooltip = "Apply improved code";
     applyCodeStatusBarItem.show();
+    const historyStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 104);
+    historyStatusBarItem.command = 'sauco-de.getAnalysisData';
+    historyStatusBarItem.text = "$(history) History";
+    historyStatusBarItem.tooltip = "View analysis history";
+    historyStatusBarItem.show();
     // Update status bar with current API URL
     function updateStatusBar() {
         const config = vscode.workspace.getConfiguration('sauco-de');
@@ -117,7 +148,7 @@ function activate(context) {
         }
     }));
     // Add status bar items to subscriptions
-    context.subscriptions.push(configStatusBarItem, analyzeStatusBarItem, metricsStatusBarItem, applyCodeStatusBarItem);
+    context.subscriptions.push(configStatusBarItem, analyzeStatusBarItem, metricsStatusBarItem, applyCodeStatusBarItem, historyStatusBarItem);
 }
 /**
  * Calculates metrics for a document and displays them in the analysis view

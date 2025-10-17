@@ -63,8 +63,12 @@ class CommandsService {
         const applyCodeDisposable = vscode.commands.registerCommand('sauco-de.applyCode', async () => {
             await this.applyImprovedCode(analysisViewProvider);
         });
+        // Get analysis data command
+        const getAnalysisDataDisposable = vscode.commands.registerCommand('sauco-de.getAnalysisData', async () => {
+            await this.getAnalysisData();
+        });
         // Add all commands to subscriptions
-        context.subscriptions.push(configureDisposable, analyzeCodeDisposable, showMetricsDisposable, applyCodeDisposable);
+        context.subscriptions.push(configureDisposable, analyzeCodeDisposable, showMetricsDisposable, applyCodeDisposable, getAnalysisDataDisposable);
     }
     /**
      * Analyzes the code in the active editor
@@ -99,8 +103,9 @@ class CommandsService {
             // Show the analysis view
             await vscode.commands.executeCommand('workbench.view.extension.sauco-explorer');
             await vscode.commands.executeCommand('saucoAnalysisView.focus');
-            // Get the global provider
+            // Get the global provider and store
             const globalAnalysisViewProvider = global.saucoAnalysisViewProvider;
+            const globalStore = global.saucoGlobalStore;
             // Show the analysis in the view
             await analysisViewProvider.showAnalysis(fileName, code);
             // Get the improvement directly from the API
@@ -113,6 +118,12 @@ class CommandsService {
                 }
                 if (analysisViewProvider.setCurrentImprovement) {
                     analysisViewProvider.setCurrentImprovement(improvement);
+                }
+                // Store in global store if available (as a backup to the storage in SaucoAnalysisViewProvider)
+                if (globalStore) {
+                    const displayFileName = fileName.split(/[\\/]/).pop() || fileName;
+                    globalStore.addAnalysisData(fileName, displayFileName, improvement, editor.document.uri);
+                    console.log(`Stored analysis data for ${displayFileName} in global store from CommandsService`);
                 }
             }
             catch (innerError) {
@@ -191,10 +202,12 @@ class CommandsService {
             // Use the global variable instead of the passed parameter
             const globalAnalysisViewProvider = global.saucoAnalysisViewProvider;
             const lastAnalyzedDocument = global.lastAnalyzedDocument;
+            const globalStore = global.saucoGlobalStore;
             // Enhanced debugging
             console.log('Global analysis provider exists:', !!globalAnalysisViewProvider);
             console.log('Passed analysis provider exists:', !!analysisViewProvider);
             console.log('Last analyzed document exists:', !!lastAnalyzedDocument);
+            console.log('Global store exists:', !!globalStore);
             // Compare the two providers
             console.log('Are providers the same object?', globalAnalysisViewProvider === analysisViewProvider);
             // Log all properties of the global provider
@@ -206,10 +219,62 @@ class CommandsService {
             console.log('Current file name (passed):', analysisViewProvider._currentFileName);
             // Try both providers
             const provider = globalAnalysisViewProvider || analysisViewProvider;
-            // If we don't have an improvement, try to get it from the last analyzed document or active editor
+            // If we don't have an improvement, try to get it from the global store, last analyzed document, or active editor
             if (!provider._currentImprovement) {
-                // First try to use the last analyzed document
-                if (lastAnalyzedDocument) {
+                // First try to get the improvement from the global store
+                if (globalStore && lastAnalyzedDocument) {
+                    const filePath = lastAnalyzedDocument.fileName;
+                    const analysisData = globalStore.getAnalysisDataByPath(filePath);
+                    if (analysisData) {
+                        console.log('Found analysis data in global store for:', filePath);
+                        // Set the improvement on both providers
+                        if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+                            globalAnalysisViewProvider.setCurrentImprovement(analysisData.improvement);
+                            globalAnalysisViewProvider._currentFileName = analysisData.fileName;
+                        }
+                        if (analysisViewProvider.setCurrentImprovement) {
+                            analysisViewProvider.setCurrentImprovement(analysisData.improvement);
+                            analysisViewProvider._currentFileName = analysisData.fileName;
+                        }
+                        // Update the provider reference
+                        provider._currentImprovement = analysisData.improvement;
+                        provider._currentFileName = analysisData.fileName;
+                    }
+                    else {
+                        // If not found in global store, try to use the last analyzed document
+                        try {
+                            const code = lastAnalyzedDocument.getText();
+                            const fileName = lastAnalyzedDocument.fileName;
+                            console.log('Trying to get improvement for last analyzed file:', fileName);
+                            // Get the improvement directly from the API
+                            const improvement = await ApiService_1.ApiService.getCodeImprovement(code);
+                            console.log('Got improvement directly from API for last analyzed document:', improvement);
+                            // Store in global store
+                            if (globalStore) {
+                                globalStore.addAnalysisData(fileName, fileName.split(/[\\/]/).pop() || fileName, improvement, lastAnalyzedDocument.uri);
+                            }
+                            // Set the improvement on both providers
+                            if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+                                globalAnalysisViewProvider.setCurrentImprovement(improvement);
+                                globalAnalysisViewProvider._currentFileName = fileName;
+                            }
+                            if (analysisViewProvider.setCurrentImprovement) {
+                                analysisViewProvider.setCurrentImprovement(improvement);
+                                analysisViewProvider._currentFileName = fileName;
+                            }
+                            // Update the provider reference
+                            provider._currentImprovement = improvement;
+                            provider._currentFileName = fileName;
+                        }
+                        catch (innerError) {
+                            console.error('Error getting improvement for last analyzed file:', innerError);
+                            // Fall back to active editor if last analyzed document fails
+                            await this._tryGetImprovementFromActiveEditor(provider, globalAnalysisViewProvider, analysisViewProvider);
+                        }
+                    }
+                }
+                else if (lastAnalyzedDocument) {
+                    // If no global store but we have last analyzed document
                     try {
                         const code = lastAnalyzedDocument.getText();
                         const fileName = lastAnalyzedDocument.fileName;
@@ -269,16 +334,116 @@ class CommandsService {
      * @param analysisViewProvider The passed analysis view provider
      * @returns A promise that resolves when the operation is complete
      */
+    /**
+     * Retrieves analysis data from the global store
+     * Allows searching by file name or path
+     */
+    static async getAnalysisData() {
+        const globalStore = global.saucoGlobalStore;
+        if (!globalStore) {
+            vscode.window.showErrorMessage('Global store not available.');
+            return;
+        }
+        // Get all analysis data
+        const allData = globalStore.getAllAnalysisData();
+        if (allData.length === 0) {
+            vscode.window.showInformationMessage('No analysis data found. Please analyze some files first.');
+            return;
+        }
+        // Create a list of file names for the quick pick
+        const fileItems = allData.map((data) => ({
+            label: data.fileName,
+            description: data.filePath,
+            detail: `Analyzed: ${new Date(data.timestamp).toLocaleString()}`,
+            data: data
+        }));
+        // Show quick pick to select a file
+        const selectedItem = await vscode.window.showQuickPick(fileItems, {
+            placeHolder: 'Select a file to view analysis data',
+            matchOnDescription: true,
+            matchOnDetail: true
+        });
+        if (!selectedItem) {
+            return; // User cancelled
+        }
+        // Show the analysis data in a new untitled document
+        const analysisData = selectedItem.data;
+        // Create a formatted string with the analysis data
+        const content = [
+            `# Analysis Data for ${analysisData.fileName}`,
+            ``,
+            `## File Information`,
+            `- File Path: ${analysisData.filePath}`,
+            `- Analyzed: ${new Date(analysisData.timestamp).toLocaleString()}`,
+            ``,
+            `## Original Code`,
+            '```',
+            analysisData.improvement.originalCode,
+            '```',
+            ``,
+            `## Improved Code`,
+            '```',
+            analysisData.improvement.improvedCode,
+            '```',
+            ``,
+            `## Explanation`,
+            analysisData.improvement.explanation,
+            ``,
+            `## Original Metrics`,
+            `- Overall Score: ${analysisData.improvement.originalMetrics.overallScore}`,
+            ...analysisData.improvement.originalMetrics.metrics.map((m) => `- ${m.name}: ${m.value} (${m.isGood ? 'Good' : 'Needs Improvement'})`),
+            ``,
+            `## Improved Metrics`,
+            `- Overall Score: ${analysisData.improvement.improvedMetrics.overallScore}`,
+            ...analysisData.improvement.improvedMetrics.metrics.map((m) => `- ${m.name}: ${m.value} (${m.isGood ? 'Good' : 'Needs Improvement'})`)
+        ].join('\n');
+        // Create a new untitled document with the analysis data
+        const document = await vscode.workspace.openTextDocument({
+            content: content,
+            language: 'markdown'
+        });
+        // Show the document
+        await vscode.window.showTextDocument(document, {
+            preview: false,
+            viewColumn: vscode.ViewColumn.Active
+        });
+        vscode.window.showInformationMessage(`Analysis data for ${analysisData.fileName} opened in a new document.`);
+    }
     static async _tryGetImprovementFromActiveEditor(provider, globalAnalysisViewProvider, analysisViewProvider) {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             try {
                 const code = editor.document.getText();
                 const fileName = editor.document.fileName;
+                const globalStore = global.saucoGlobalStore;
                 console.log('Trying to get improvement for current file:', fileName);
-                // Get the improvement directly from the API
+                // First check if we have this file in the global store
+                if (globalStore) {
+                    const analysisData = globalStore.getAnalysisDataByPath(fileName);
+                    if (analysisData) {
+                        console.log('Found analysis data in global store for active editor:', fileName);
+                        // Set the improvement on both providers
+                        if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
+                            globalAnalysisViewProvider.setCurrentImprovement(analysisData.improvement);
+                            globalAnalysisViewProvider._currentFileName = analysisData.fileName;
+                        }
+                        if (analysisViewProvider.setCurrentImprovement) {
+                            analysisViewProvider.setCurrentImprovement(analysisData.improvement);
+                            analysisViewProvider._currentFileName = analysisData.fileName;
+                        }
+                        // Update the provider reference
+                        provider._currentImprovement = analysisData.improvement;
+                        provider._currentFileName = analysisData.fileName;
+                        return; // Exit early if found in global store
+                    }
+                }
+                // If not found in global store, get the improvement directly from the API
                 const improvement = await ApiService_1.ApiService.getCodeImprovement(code);
                 console.log('Got improvement directly from API:', improvement);
+                // Store in global store if available
+                if (globalStore) {
+                    globalStore.addAnalysisData(fileName, fileName.split(/[\\/]/).pop() || fileName, improvement, editor.document.uri);
+                }
                 // Set the improvement on both providers
                 if (globalAnalysisViewProvider && globalAnalysisViewProvider.setCurrentImprovement) {
                     globalAnalysisViewProvider.setCurrentImprovement(improvement);
