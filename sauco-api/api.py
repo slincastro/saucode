@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import os
 import pickle
-
+import traceback
 from qdrant_client import QdrantClient
 from src.service.improvement_service import ImprovementService
 from src.domain.models import ImproveRequest, ImproveResponse, RetrieveContextRequest, RetrieveContextResponse
@@ -72,6 +72,8 @@ async def improve(req: ImproveRequest):
         )
     except Exception as e:
         print(f" Error 500 - {str(e)}")
+        stacktrace = traceback.format_exc()  # 🔹 Captura todo el stacktrace como string
+        print(error_message)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/retrieve_context", response_model=RetrieveContextResponse)
@@ -80,6 +82,8 @@ async def retrieve_context(req: RetrieveContextRequest):
         # Call the _retrieve_context method from the service
         _, chunk_details = _service._retrieve_context(req.Query)
         
+        print(f" ... {len(chunk_details)} items founded")
+        print(f"Vectorizer Pkl {TFIDF_VECTORIZER_PATH}")
         # Format the response
         retrieved_context = [
             {
