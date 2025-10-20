@@ -277,19 +277,32 @@ class ImprovementService:
         aplicando las recomendaciones y siguiendo el contexto recuperado si aplica.
         """
         prompt = f"""
-            You are a senior refactoring assistant.
-            Improve the following code while preserving its behavior.
-            Apply these recommendations:
-            {recommendations}
+        You are a senior refactoring assistant. Improve the code while preserving functional behavior.
 
-            Use the retrieved context if relevant:
-            {retrieved or "(no context)"}
+        Hard requirements (must comply):
+        1) 'execute' is the ONLY public entry point and the MAIN orchestrator.
+        2) Preserve 'execute' EXACT NAME and EXACT PARAMETER LIST (names, order, defaults, *args, **kwargs).
+        3) Keep 'execute' callable by existing code and tests (same module/class location).
+        4) You may create helper functions (e.g., 'main', 'run', '_impl'), BUT 'execute' must remain and call them as needed.
+        5) Do NOT change 'execute' decorators or return contract (type/shape of the return value).
 
-            IMPORTANT: Return ONLY the improved code with no markdown fences, no ```python markers, 
-            and no explanations. Just the raw code itself.
+        Allowed changes (flexible):
+        - Refactor internal logic, extract helpers, rename local variables, reorder internal steps if behavior is unchanged.
+        - Improve readability, error handling, docstrings, and performance without altering observable behavior.
 
-            IMPORTANT: NEVER CHANGE THE "execute" Function or its params because is used to perform functional tests. 
-            """
+        Behavioral constraint:
+        - The overall control flow triggered by calling 'execute(...)' must remain equivalent (same functional outcomes, same side effects order where visible to callers).
+
+        Use the following recommendations and (optionally) the retrieved context to guide changes:
+        RECOMMENDATIONS:
+        {recommendations}
+
+        RETRIEVED CONTEXT:
+        {retrieved or "(no context)"}
+
+        Output format:
+        - Return ONLY the full improved code (no markdown fences, no ```python, no explanations).
+        """
         resp = self.client.chat.completions.create(
             model=self.model,
             temperature=0.0,

@@ -1,6 +1,26 @@
 import unittest
-#from src.excercise1_fibonacci.fibonacci import f
-from .fibonacci import execute
+import os
+import sys
+#from src.excercise1_fibonacci.fibonacci import execute
+#from .fibonacci import execute
+
+try:
+    # Try relative import first
+    from .fibonacci import execute
+    print("Successfully imported execute using relative import")
+except ImportError:
+    try:
+        # Try absolute import
+        from src.excercise1_fibonacci.fibonacci import execute
+        print("Successfully imported execute using absolute import")
+    except ImportError:
+        # Last resort: direct import with sys.path manipulation
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        from fibonacci import execute
+        print("Successfully imported execute using direct import")
+
 
 class TestFibonacci(unittest.TestCase):
     
