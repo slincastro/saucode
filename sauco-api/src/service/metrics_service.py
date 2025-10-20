@@ -387,6 +387,123 @@ def calculate_average_method_size(code: str) -> float:
     
     return len(non_empty_lines) / methods_info['count']
 
+class MaxNestingVisitor(ast.NodeVisitor):
+    """
+    AST visitor that calculates the maximum nesting level in Python code.
+    
+    Nesting is tracked for:
+    - if/elif/else blocks
+    - for/while loops
+    - try/except blocks
+    - function/class definitions
+    """
+    
+    def __init__(self):
+        self.current_nesting = 0
+        self.max_nesting = 0
+    
+    def _update_max_nesting(self):
+        if self.current_nesting > self.max_nesting:
+            self.max_nesting = self.current_nesting
+    
+    def _visit_nested_block(self, node_body):
+        self.current_nesting += 1
+        self._update_max_nesting()
+        
+        for child in node_body:
+            self.visit(child)
+        
+        self.current_nesting -= 1
+    
+    def visit_FunctionDef(self, node):
+        self._visit_nested_block(node.body)
+    
+    def visit_AsyncFunctionDef(self, node):
+        self._visit_nested_block(node.body)
+    
+    def visit_ClassDef(self, node):
+        self._visit_nested_block(node.body)
+    
+    def visit_If(self, node):
+        self._visit_nested_block(node.body)
+        if node.orelse:
+            self._visit_nested_block(node.orelse)
+    
+    def visit_For(self, node):
+        self._visit_nested_block(node.body)
+        if node.orelse:
+            self._visit_nested_block(node.orelse)
+    
+    def visit_AsyncFor(self, node):
+        self._visit_nested_block(node.body)
+        if node.orelse:
+            self._visit_nested_block(node.orelse)
+    
+    def visit_While(self, node):
+        self._visit_nested_block(node.body)
+        if node.orelse:
+            self._visit_nested_block(node.orelse)
+    
+    def visit_Try(self, node):
+        self._visit_nested_block(node.body)
+        
+        for handler in node.handlers:
+            self._visit_nested_block(handler.body)
+        
+        if node.orelse:
+            self._visit_nested_block(node.orelse)
+        
+        if node.finalbody:
+            self._visit_nested_block(node.finalbody)
+    
+    def visit_With(self, node):
+        self._visit_nested_block(node.body)
+    
+    def visit_AsyncWith(self, node):
+        self._visit_nested_block(node.body)
+
+def calculate_max_nesting(code: str) -> int:
+    """
+    Calculate the maximum nesting level in a given code snippet.
+    
+    Nesting is tracked for control structures like:
+    - if/elif/else blocks
+    - for/while loops
+    - try/except blocks
+    - function/class definitions
+    
+    Args:
+        code (str): The code snippet to analyze
+        
+    Returns:
+        int: The maximum nesting level found in the code
+    """
+    try:
+        # Try to parse the code as Python
+        tree = ast.parse(code)
+        visitor = MaxNestingVisitor()
+        visitor.visit(tree)
+        
+        return visitor.max_nesting
+    except SyntaxError:
+        # If the code is not valid Python, use regex as a fallback
+        # This is less accurate but can work for other languages
+        
+        # We'll count indentation levels as a proxy for nesting
+        lines = code.split('\n')
+        max_indent = 0
+        
+        for line in lines:
+            if line.strip():  # Skip empty lines
+                # Count leading spaces/tabs
+                indent = len(line) - len(line.lstrip())
+                # Estimate the nesting level based on indentation
+                # Assuming 2-4 spaces or 1 tab per level
+                estimated_nesting = indent // 2  # Conservative estimate
+                max_indent = max(max_indent, estimated_nesting)
+        
+        return max_indent
+
 def calculate_metrics(code: str) -> Dict[str, Any]:
     """
     Calculate various metrics for a given code snippet.
@@ -415,6 +532,9 @@ def calculate_metrics(code: str) -> Dict[str, Any]:
     
     # Calculate average method size
     metrics["average_method_size"] = calculate_average_method_size(code)
+    
+    # Calculate maximum nesting level
+    metrics["max_nesting"] = calculate_max_nesting(code)
     
     # Additional metrics can be added here in the future
     

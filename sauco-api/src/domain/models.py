@@ -8,6 +8,7 @@ class Metrics(BaseModel):
     number_of_loops: int = Field(0, description="Number of loops in the code")
     cyclomatic_complexity: int = Field(1, description="Cyclomatic complexity of the code")
     average_method_size: float = Field(0.0, description="Average number of lines of code per method")
+    max_nesting: int = Field(0, description="Maximum nesting level in the code")
 
 class MetricsResponse(BaseModel):
     before: Metrics = Field(Metrics(), description="Metrics before code improvement")
