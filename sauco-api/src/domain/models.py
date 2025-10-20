@@ -15,6 +15,7 @@ class MetricsResponse(BaseModel):
 
 class ImproveRequest(BaseModel):
     Code: str = Field(..., description="Código fuente a analizar y mejorar")
+    Tests: Optional[str] = Field(None, description="Pruebas asociadas al código para considerar en la mejora")
 
 class RetrieveContextRequest(BaseModel):
     Query: str = Field(..., description="Consulta para recuperar contexto")

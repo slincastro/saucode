@@ -58,12 +58,12 @@ class ImprovementService:
         self.vectorizer = vectorizer
 
     # -------------------- Public API --------------------
-    async def run_workflow(self, code: str) -> Tuple[str, str, List[Dict], MetricsResponse]:
+    async def run_workflow(self, code: str, tests: Optional[str] = None) -> Tuple[str, str, List[Dict], MetricsResponse]:
         """
         1) Describe y analiza el código (variables, métodos, bucles, responsabilidades)
         2) Usa esa descripción como query TF-IDF en Qdrant para recuperar contexto (chunks)
         3) Pide recomendaciones a OpenAI
-        4) Pide código mejorado a OpenAI
+        4) Pide código mejorado a OpenAI, considerando las pruebas si están disponibles
         5) Calculate metrics before and after code improvement
         Returns: (analysis_text, improved_code, retrieved_context_details, metrics)
         """
@@ -78,7 +78,7 @@ class ImprovementService:
         analysis = "\n\n".join(analysis_list)
         retrieved_text, chunk_details = self._retrieve_context(analysis_list)
         recommendations = await self._recommendations(code, analysis, retrieved_text)
-        improved_code = await self._refactor_code(code, recommendations, retrieved_text)
+        improved_code = await self._refactor_code(code, recommendations, retrieved_text, tests)
 
         # Calculate metrics after code improvement
         after_metrics = calculate_metrics(improved_code)
@@ -271,11 +271,23 @@ class ImprovementService:
         )
         return resp.choices[0].message.content.strip()
 
-    async def _refactor_code(self, code: str, recommendations: str, retrieved: str) -> str:
+    async def _refactor_code(self, code: str, recommendations: str, retrieved: str, tests: Optional[str] = None) -> str:
         """
         Pide a OpenAI que entregue SOLO el código mejorado, preservando comportamiento,
         aplicando las recomendaciones y siguiendo el contexto recuperado si aplica.
+        Si se proporcionan pruebas, se incluyen para que el LLM las tenga en cuenta al generar la respuesta.
         """
+        # Include tests section if tests are provided
+        tests_section = ""
+        if tests:
+            tests_section = f"""
+        TESTS:
+        The following tests are provided to help you understand how the code should behave.
+        Make sure your refactored code passes these tests:
+        
+        {tests}
+        """
+
         prompt = f"""
         You are a senior refactoring assistant. Improve the code while preserving functional behavior.
 
@@ -299,6 +311,7 @@ class ImprovementService:
 
         RETRIEVED CONTEXT:
         {retrieved or "(no context)"}
+        {tests_section}
 
         Output format:
         - Return ONLY the full improved code (no markdown fences, no ```python, no explanations).

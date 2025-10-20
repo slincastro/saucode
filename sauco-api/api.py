@@ -52,7 +52,7 @@ def health_check():
 @app.post("/improve", response_model=ImproveResponse)
 async def improve(req: ImproveRequest):
     try:
-        analysis, improved_code, chunk_details, metrics = await _service.run_workflow(req.Code)
+        analysis, improved_code, chunk_details, metrics = await _service.run_workflow(req.Code, req.Tests)
         
         retrieved_context = [
             {
