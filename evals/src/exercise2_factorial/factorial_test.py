@@ -1,7 +1,23 @@
 import unittest
 import sys
 import io
-from factorial import generate_factorial
+import os
+
+# Try both absolute and relative imports to handle different execution contexts
+try:
+    # Absolute import for when running from notebook or other directories
+    from evals.src.exercise2_factorial.factorial import execute
+except ImportError:
+    # Relative import for when running from the same directory
+    try:
+        from factorial import execute
+    except ImportError:
+        # Add the current directory to sys.path as a fallback
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        from factorial import execute
+
 
 class TestFactorial(unittest.TestCase):
     
@@ -71,39 +87,44 @@ class TestFactorial(unittest.TestCase):
         # Call our modified function and return the result
         return modified_generate_factorial()
     
+    def execute(self, n):
+        """Execute the factorial function with the given input.
+        This method uses the execute function imported from factorial.py."""
+        return execute(n)
+    
     def test_factorial_of_zero(self):
         """Test when input is 0, should return 1"""
-        result = self.run_factorial(0)
+        result = self.execute(0)
         self.assertEqual(result, 1)
     
     def test_factorial_of_one(self):
         """Test when input is 1, should return 1"""
-        result = self.run_factorial(1)
+        result = self.execute(1)
         self.assertEqual(result, 1)
     
     def test_factorial_of_five(self):
         """Test factorial of 5, should return the value calculated by the function"""
-        result = self.run_factorial(5)
+        result = self.execute(5)
         # The function has bugs and doesn't calculate factorial correctly
         # We're testing what it actually returns, not what it should return
         self.assertEqual(result, 34560.0)
     
     def test_non_integer_input(self):
         """Test with non-integer input, should return -1"""
-        result = self.run_factorial("a")
+        result = self.execute("a")
         self.assertEqual(result, -1)
     
     def test_negative_value(self):
         """Test with negative value, should convert to positive and calculate factorial"""
         # The function converts negative to positive
-        result = self.run_factorial(-5)
+        result = self.execute(-5)
         # The function has bugs and doesn't calculate factorial correctly
         # We're testing what it actually returns, not what it should return
         self.assertEqual(result, 34560.0)  # Same as factorial of 5 with the buggy implementation
     
     def test_large_value(self):
         """Test with a large value"""
-        result = self.run_factorial(10)
+        result = self.execute(10)
         # The function has bugs and doesn't calculate factorial correctly
         # We're testing what it actually returns, not what it should return
         self.assertEqual(result, 6.658606584104737e+27)
@@ -113,7 +134,7 @@ class TestFactorial(unittest.TestCase):
         # The function has a try-except block
         # We're testing that it handles errors gracefully
         # This is a bit tricky to test directly, so we're just ensuring it returns something
-        result = self.run_factorial(3)
+        result = self.execute(3)
         self.assertIsNotNone(result)
 
 if __name__ == '__main__':

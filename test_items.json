@@ -1,0 +1,17 @@
+[
+    {
+        "file": "evals/src/exercise1_fibonacci/fibonacci.py",
+        "test": "evals/src/exercise1_fibonacci/fibonacci_test",
+        "iterations": 1
+    },
+    {
+        "file": "evals/src/exercise2_factorial/factorial.py",
+        "test": "evals/src/exercise2_factorial/factorial_test",
+        "iterations": 1
+    },
+    {
+        "file": "evals/src/exercise3_calculate_pi/calculate_pi.py",
+        "test": "evals/src/exercise3_calculate_pi/calculate_pi_test",
+        "iterations": 1
+    }
+]

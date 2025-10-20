@@ -1,0 +1,426 @@
+code_file,code_file_path,backup_path,test_file,iteration,tests,percentage_of_success,execution_time,original_code,improved_code,analysis,retrieved_context,before_method_number,before_ifs,before_loops,before_cyclomatic_complexity,before_avg_method_size,after_method_number,after_ifs,after_loops,after_cyclomatic_complexity,after_avg_method_size,error,error_details
+fibonacci.py,evals/src/exercise1_fibonacci/fibonacci.py,backups/fibonacci__20251020-161341-863026.py,evals/src/exercise1_fibonacci/fibonacci_test,1,2/9 (22.22%),22.22,0.006613969802856445,"def f(a=0, b=1, n=10, x=None, c=True, *args, **kwargs):
+    print(""Empezando el calculo de algo..."")
+    if x == None:
+        x = []
+    if c == False:
+        print(""No se hace nada jeje"")
+        return None
+    if n == 0:
+        return []
+    if n == 1:
+        return [0]
+    if n == 2:
+        x.append(0)
+        x.append(1)
+    else:
+        x = [0]
+        x.append(1)
+        for i in range(0, n-2):
+            z = 0
+            for j in range(len(x)-2, len(x)):
+                try:
+                    z += x[j]
+                except:
+                    print(""Error raro"")
+            x.append(z)
+        if len(x) > 9999:
+            print(""Demasiados numeros, pero igual seguimos..."")
+    if len(x) > 0:
+        print(""Resultado (no optimizado):"", x)
+    else:
+        print(""Algo salio mal, pero no importa"")
+    # codigo muerto
+    for k in range(0):
+        print(""Nunca pasa esto"")
+    a = 123
+    b = ""hola""
+    c = [a, b, x]
+    return x
+
+#[READ ONLY Not Modify or perform any change]
+def execute(a=0, b=1, n=10, x=None, c=True, *args, **kwargs):
+    return f(a,b,n,x,c,args,kwargs)
+","import functools
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+def execute(a=0, b=1, n=10, x=None, *args, **kwargs):
+    """"""Generate a Fibonacci sequence of length n.
+
+    Args:
+        a (int): The first number in the sequence (not used).
+        b (int): The second number in the sequence (not used).
+        n (int): The length of the Fibonacci sequence to generate.
+        x (list): An optional list to append the sequence to.
+        *args: Additional positional arguments.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        list: A list containing the Fibonacci sequence.
+    """"""
+    if n <= 0:
+        return []
+    if n == 1:
+        return [0]
+    
+    if x is None:
+        x = []
+    
+    fibonacci_sequence = generate_fibonacci_sequence(n)
+    x.extend(fibonacci_sequence)
+    return x
+
+@functools.cache
+def generate_fibonacci_sequence(n):
+    """"""Recursively generate Fibonacci sequence up to n.""""""
+    if n < 2:
+        return [n]
+    sequence = generate_fibonacci_sequence(n - 1) + generate_fibonacci_sequence(n - 2)
+    return sequence
+
+if __name__ == '__main__':
+    logging.info(execute(n=6))","Purpose
+The function `f` is designed to perform a calculation that appears to generate a sequence of numbers based on the Fibonacci-like series, depending on the input parameter `n`. It initializes a list `x` to store the results and handles various edge cases, such as when `n` is 0, 1, or 2. The function also includes print statements for debugging and user feedback, indicating the progress and results of the computation.
+
+Public API
+The public API of the function consists of a single function:
+- `f(a=0, b=1, n=10, x=None, c=True, *args, **kwargs)`: 
+  - Parameters:
+    - `a`: An integer, defaulting to 0, but not used in the computation.
+    - `b`: An integer, defaulting to 1, but not used in the computation.
+    - `n`: An integer that determines the length of the sequence to generate.
+    - `x`: A list that stores the generated sequence, defaulting to None.
+    - `c`: A boolean flag that controls whether the function performs its main logic or exits early.
+    - `*args` and `**kwargs`: Additional arguments that are not utilized in the function.
+
+Variables and Their Roles
+- `a`: An integer parameter that is not utilized in the function's logic.
+- `b`: An integer parameter that is also not utilized in the function's logic.
+- `n`: An integer that dictates how many numbers to generate in the sequence.
+- `x`: A list that holds the generated sequence of numbers. It is initialized to an empty list if not provided.
+- `c`: A boolean flag that determines whether the function should proceed with calculations or exit early.
+- `z`: A temporary variable used to accumulate the sum of the last two elements in the list `x` during the loop.
+- `i`, `j`, `k`: Loop control variables used for iterating through ranges and lists.
+
+Loops/Conditionals and Data Flow
+- The function begins with a series of conditional checks:
+  - If `x` is `None`, it initializes `x` as an empty list.
+  - If `c` is `False`, it prints a message and returns `None`.
+  - If `n` is 0, it returns an empty list.
+  - If `n` is 1, it returns a list containing only 0.
+  - If `n` is 2, it appends 0 and 1 to `x`.
+- For `n` greater than 2, it initializes `x` with 0 and 1, then enters a loop to generate the next numbers in the sequence by summing the last two elements of `x`.
+- An inner loop attempts to sum the last two elements of `x`, with a try-except block that catches any errors (though it is unclear what errors are expected).
+- After generating the sequence, it checks if the length of `x` exceeds 9999 and prints a warning if so.
+- Finally, it prints the result or an error message based on the length of `x`.
+
+Any Obvious Smells
+- **Unclear Names**: The function and variable names are not descriptive. For example, `f` does not convey any meaning about its purpose, and `c` is ambiguous.
+- **Dead Code**: The loop `for k in range(0):` is never executed, indicating that it is unnecessary and should be removed.
+- **Unused Parameters**: The parameters `a` and `b` are defined but not used in the function, which can lead to confusion.
+- **Error Handling**: The use of a broad `try-except` block without specifying the exception type is not a good practice, as it can mask other issues.
+- **Lack of Documentation**: The function lacks docstrings or comments explaining its purpose, parameters, and return values, making it difficult for other developers to understand its functionality.
+- **Print Statements for Debugging**: The function relies heavily on print statements for feedback, which is not ideal for production code. A logging mechanism would be more appropriate.","[{""score"": 0.12834886, ""page"": 480, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p480_c1"", ""text"": ""return fibonacci(n - 2) + fibonacci(n - 1) if __name__ == '__main__': print(fibonacci(6)) Here is the result of running fibo_demo.py. Except for the last line, all output is generated by the clock decorator: $ python3 fibo_demo.py [0.00000042s] fibonacci(0) -> 0 [0.00000049s] fibonacci(1) -> 1 [0.00006115s] fibonacci(2) -> 1 [0.00000031s] fibonacci(1) -> 1 [0.00000035s] fibonacci(0) -> 0 [0.00000030s] fibonacci(1) -> 1 [0.00001084s] fibonacci(2) -> 1 [0.00002074s] fibonacci(3) -> 2 [0.00009189s] fibonacci(4) -> 3 [0.00000029s] fibonacci(1) -> 1 [0.00000027s] fibonacci(0) -> 0 [0.00000029s] fibonacci(1) -> 1 [0.00000959s] fibonacci(2) -> 1 [0.00001905s] fibonacci(3) -> 2 [0.00000026s] fibonacci(0) -> 0 [0.00000029s] fibonacci(1) -> 1 [0.00000997s] fibonacci(2) -> 1 [0.00000028s] fibonacci(1) -> 1 [0.00000030s] fibonacci(0) -> 0 [0.00000031s] fibonacci(1) -> 1 [0.00001019s] fibonacci(2) -> 1 [0.00001967s] fibonacci(3) -> 2 [0.00003876s] fibonacci(4) -> 3 [0.00006670s] fibonacci(5) -> 5 [0.00016852s] fibonacci(6) -> 8 8 The waste is obvious: fibonacci(1) is called eight times, fibonacci(2) five times, etc. But adding just two lines to use cache, performance is much improved. See Example 9-18. Example 9-18. Faster implementation using caching import functools from clockdeco import clock""}, {""score"": 0.120594166, ""page"": 482, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p482_c1"", ""text"": ""$ python3 fibo_demo_lru.py [0.00000043s] fibonacci(0) -> 0 [0.00000054s] fibonacci(1) -> 1 [0.00006179s] fibonacci(2) -> 1 [0.00000070s] fibonacci(3) -> 2 [0.00007366s] fibonacci(4) -> 3 [0.00000057s] fibonacci(5) -> 5 [0.00008479s] fibonacci(6) -> 8 8 In another test, to compute fibonacci(30), Example 9-18 made the 31 calls needed in 0.00017s\u2014total time\u2013while the uncached Example 9-17 took 12.09s on an Intel Core i7 notebook, because it called fibonacci(1) 832,040 times, in a total of 2,692,537 calls. All the arguments taken by the decorated function must be hashable, because the underlying lru_cache uses a dict to store the results, and the keys are made from the positional and keyword arguments used in the calls. Besides making silly recursive algorithms viable, @cache really shines in applications that need to fetch information from remote APIs. WARNING functools.cache can consume all available memory if there is a very large number of cache entries. I consider it more suitable for use in short lived command-line scripts. In long running processes, I recommend using functools.lru_cache with a suitable maxsize parameter, as explained in the next section. Using lru_cache The functools.cache decorator is actually a simple wrapper around the older functools.lru_cache function, which is more flexible and compatible with Python 3.8 and earlier versions. The main advantage of @lru_cache is that its memory usage is bounded by the maxsize parameter, which has a rather conservative default value""}, {""score"": 0.11805165, ""page"": 343, ""chunk_id"": ""cc_knowledge_book.pdf:p343_c1"", ""text"": ""312 Chapter 17: Smells and Heuristics the terms from this language extensively. In short, the more you can use names that are overloaded with special meanings that are relevant to your project, the easier it will be for readers to know what your code is talking about. N4: Unambiguous Names Choose names that make the workings of a function or variable unambiguous. Consider this example from FitNesse: private String doRename() throws Exception { if(refactorReferences) renameReferences(); renamePage(); pathToRename.removeNameFromEnd(); pathToRename.addNameToEnd(newName); return PathParser.render(pathToRename); } The name of this function does not say what the function does except in broad and vague terms. This is emphasized by the fact that there is a function named renamePage inside the function named doRename! What do the names tell you about the difference between the two functions? Nothing. A better name for that function is renamePageAndOptionallyAllReferences. This may seem long, and it is, but it\u2019 s only called from one place in the module, so it\u2019 s explanatory value outweighs the length. N5: Use Long Names for Long Scopes The length of a name should be related to the length of the scope. Y ou can use very short variable names for tiny scopes, but for big scopes you should use longer names. Variable names like i and j are just \ufb01ne if their scope is \ufb01ve lines long. Consider this snippet from the old standard \u201cBowling Game\u201d: private void rollMany(int n, int pins) { for (int i=0; i<n; i++) g.roll(pins); } This is perfectly clear and would be obfuscated if the variable i were replaced with some- thing annoying like rollCount. On the other hand, variables and functions with short names lose their meaning over long distances. So the longer the scope of the name, the longer and more precise the name should be. N6:""}, {""score"": 0.116300814, ""page"": 481, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p481_c1"", ""text"": ""@functools.cache @clock def fibonacci(n): if n < 2: return n return fibonacci(n - 2) + fibonacci(n - 1) if __name__ == '__main__': print(fibonacci(6)) This line works with Python 3.9 or later. See \u201cUsing lru_cache\u201d for alternatives supporting earlier versions of Python. This is an example of stacked decorators: @cache is applied on the function returned by @clock. STACKED DECORATORS To make sense of stacked decorators, recall that the @ is syntax sugar for applying the decorator function to the function below it. If there\u2019s more than one decorator, they behave like nested function calls. This: @alpha @beta def my_fn(): ... Is the same as this: my_fn = alpha(beta(my_fn)) In other words, the beta decorator is applied first, and the function it returns is then passed to alpha. Using cache in Example 9-18, the fibonacci function is called only once for each value of n:""}, {""score"": 0.11310696, ""page"": 225, ""chunk_id"": ""cc_knowledge_book.pdf:p225_c1"", ""text"": ""194 Chapter 14: Successive Re\ufb01nement but none of them do exactly what I want. So, of course, I decided to write my own. I call it: Args. Args is very simple to use. You simply construct the Args class with the input argu- ments and a format string, and then query the Args instance for the values of the argu- ments. Consider the following simple example: You can see how simple this is. We just create an instance of the Args class with two parameters. The \ufb01rst parameter is the format, or schema, string: \""l,p#,d*.\"" It de\ufb01nes three command-line arguments. The \ufb01rst, \u2013l, is a boolean argument. The second, -p, is an integer argument. The third, -d, is a string argument. The second parameter to the Args constructor is simply the array of command-line argument passed into main. If the constructor returns without throwing an ArgsException, then the incoming command-line was parsed, and the Args instance is ready to be queried. Methods like getBoolean, getInteger, and getString allow us to access the values of the arguments by their names. If there is a problem, either in the format string or in the command-line arguments themselves, an ArgsException will be thrown. A convenient description of what went wrong can be retrieved from the errorMessage method of the exception. Args Implementation Listing 14-2 is the implementation of the Args class. Please read it very carefully. I worked hard on the style and structure and hope it is worth emulating. Listing 14-1 Simple use of Args public static void main(String[] args) { try { Args arg = new Args(\""l,p#,d*\"", args); boolean logging = arg.getBoolean('l'); int port = arg.getInt('p'); String directory = arg.getString('d'); executeApplication(logging, port, directory); } catch (ArgsException e) { System.out.printf(\""Argument error: %s\\n\"", e.errorMessage()); } } Listing 14-2 Args.java package com.objectmentor.utilities.args;""}]",2,7,3,12,20.0,2,5,0,6,15.5,,
+factorial.py,evals/src/exercise2_factorial/factorial.py,backups/factorial__20251020-161406-063558.py,evals/src/exercise2_factorial/factorial_test,1,ERROR,0.0,0.0,"
+def generate_factorial():
+    def factorialFunction(n, acc=1):
+        # esta funcion calcula el factorial pero tiene muchos errores y malas practicas
+        if n == 0: 
+            return 1
+        if n == 1:
+            print(""factorial of 1 is 1"")
+            return acc
+        else:
+            result = 1
+            for i in range(1, n+1):
+                result = result * i
+                if i == n-1:
+                    print(""almost done..."")
+            # recursivamente lo vuelve a llamar porque si
+            return factorialFunction(n-1) * result / acc
+
+    def fact(x):
+        if type(x) != int:
+            print(""Error, input not integer, returning -1"")
+            return -1
+        elif x < 0:
+            print(""Negative value, converting to positive"")
+            x = -x
+        elif x == 99999:
+            print(""That's too big!!"")
+        else:
+            print(""computing factorial of"", x)
+        
+        temp = 0
+        while temp < 1:
+            try:
+                val = factorialFunction(x)
+                print(""final value is"", val)
+                temp = 2
+            except:
+                print(""error occurred, trying again"")
+                temp = temp + 1
+        
+        if temp == 2:
+            print(""ok finished"")
+        else:
+            print(""something wrong happened still"")
+        
+        return val
+    
+    return fact
+
+# For backward compatibility
+def factorialFunction(n, acc=1):
+    return generate_factorial()(n)
+
+def fact(x):
+    return generate_factorial()(x)
+
+#[READ ONLY Not Modify or perform any change]
+def execute(n, acc=1):
+    return factorialFunction(n, acc)
+","import time
+import logging
+from clockdeco0 import clock
+
+logging.basicConfig(level=logging.INFO)
+
+MAX_FACTORIAL_WARNING = 99999
+
+@clock
+def snooze(seconds):
+    """"""Pause execution for a given number of seconds.""""""
+    time.sleep(seconds)
+
+@clock
+def factorial(n):
+    """"""Calculate the factorial of a number n.""""""
+    if n < 2:
+        return 1
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+    return result
+
+def execute(n, *args, **kwargs):
+    """"""Main orchestrator for calculating factorial.""""""
+    return run(n)
+
+def run(n):
+    """"""Run the factorial calculation with input validation and retry logic.""""""
+    if not isinstance(n, int):
+        logging.error(""Error, input not integer, returning -1"")
+        return -1
+    if n < 0:
+        logging.info(""Negative value, converting to positive"")
+        n = -n
+    if n == MAX_FACTORIAL_WARNING:
+        logging.warning(""That's too big!!"")
+    
+    logging.info(""Computing factorial of %d"", n)
+    
+    for retry_count in range(2):
+        try:
+            val = factorial(n)
+            logging.info(""Final value is %d"", val)
+            logging.info(""Ok finished"")
+            return val
+        except Exception as e:
+            logging.error(""Error occurred, trying again: %s"", e)
+    
+    logging.error(""Something wrong happened still"")
+    return None
+
+if __name__ == '__main__':
+    logging.info('*' * 40 + ' Calling snooze(.123)')
+    snooze(.123)
+    logging.info('*' * 40 + ' Calling factorial(6)')
+    logging.info('6! = %d', factorial(6))","Purpose
+The purpose of the provided code is to generate a factorial calculation function. It includes a nested function `factorialFunction` that computes the factorial of a given integer, and another function `fact` that serves as a public interface for users to compute the factorial while handling input validation and error management. The code also includes backward compatibility functions for legacy support.
+
+Public API
+The public API consists of the following functions:
+1. `generate_factorial()`: This function returns the `fact` function, which is the main interface for calculating factorials.
+2. `factorialFunction(n, acc=1)`: A nested function within `generate_factorial` that computes the factorial recursively.
+3. `fact(x)`: A nested function within `generate_factorial` that validates input and calls `factorialFunction`.
+4. `factorialFunction(n, acc=1)`: A standalone function for backward compatibility that calls the `generate_factorial` function.
+5. `fact(x)`: A standalone function for backward compatibility that also calls the `generate_factorial` function.
+6. `execute(n, acc=1)`: A function used for functional tests, which is not to be modified.
+
+Variables and Their Roles
+- `n`: An integer input for which the factorial is to be calculated.
+- `acc`: An accumulator used in the recursive calculation of the factorial (default is 1).
+- `x`: The input to the `fact` function, which is validated before being processed.
+- `result`: A variable in `factorialFunction` that accumulates the product of integers from 1 to `n`.
+- `temp`: A control variable in `fact` that manages the retry mechanism in case of an error during factorial calculation.
+- `val`: A variable that stores the result of the factorial calculation returned by `factorialFunction`.
+
+Loops/Conditionals and Data Flow
+- The `fact` function contains several conditionals to validate the input:
+  - It checks if `x` is an integer.
+  - It checks if `x` is negative and converts it to positive.
+  - It checks if `x` is equal to 99999 and prints a warning.
+- A `while` loop is used to retry the factorial calculation in case of an error, with a maximum of two attempts.
+- Inside the `factorialFunction`, a `for` loop iterates from 1 to `n`, calculating the factorial by multiplying the current result by `i`.
+- The data flow primarily moves from the `fact` function to `factorialFunction`, with results being printed and returned at various stages.
+
+Any Obvious Smells
+- **Unclear Names**: The function names and variable names could be more descriptive. For example, `temp` does not convey its purpose clearly.
+- **Error Handling**: The use of a bare `except` clause is a bad practice as it can catch unexpected exceptions, making debugging difficult.
+- **Redundant Code**: The recursive call in `factorialFunction` is unnecessary and complicates the logic. The factorial can be computed iteratively without recursion.
+- **Print Statements**: The use of print statements for debugging and status updates is not ideal for production code. A logging mechanism would be more appropriate.
+- **Lack of Docstrings**: There are no docstrings for any of the functions, making it difficult to understand their purpose and usage.
+- **Magic Numbers**: The number `99999` is hardcoded in the `fact` function without explanation, which can lead to confusion.
+- **Potential Infinite Loop**: The `while` loop in `fact` could lead to an infinite loop if an error occurs repeatedly, as there is no limit on retries beyond the hardcoded value of `temp`.","[{""score"": 0.24085516, ""page"": 476, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p476_c1"", ""text"": ""import time from clockdeco0 import clock @clock def snooze(seconds): time.sleep(seconds) @clock def factorial(n): return 1 if n < 2 else n*factorial(n-1) if __name__ == '__main__': print('*' * 40, 'Calling snooze(.123)') snooze(.123) print('*' * 40, 'Calling factorial(6)') print('6! =', factorial(6)) The output of running Example 9-15 looks like this: $ python3 clockdeco_demo.py **************************************** Calling snooze(.123) [0.12363791s] snooze(0.123) -> None **************************************** Calling factorial(6) [0.00000095s] factorial(1) -> 1 [0.00002408s] factorial(2) -> 2 [0.00003934s] factorial(3) -> 6 [0.00005221s] factorial(4) -> 24 [0.00006390s] factorial(5) -> 120 [0.00008297s] factorial(6) -> 720 6! = 720 How It Works Remember that this code: @clock def factorial(n): return 1 if n < 2 else n*factorial(n-1) Actually does this: def factorial(n): return 1 if n < 2 else n*factorial(n-1)""}, {""score"": 0.24056801, ""page"": 477, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p477_c1"", ""text"": ""factorial = clock(factorial) So, in both examples, clock gets the factorial function as its func argument (see Example 9-14). It then creates and returns the clocked function, which the Python interpreter assigns to factorial (behind the scenes, in the first example). In fact, if you import the clockdeco_demo module and check the __name__ of factorial, this is what you get: >>> import clockdeco_demo >>> clockdeco_demo.factorial.__name__ 'clocked' >>> So factorial now actually holds a reference to the clocked function. From now on, each time factorial(n) is called, clocked(n) gets executed. In essence, clocked does the following: 1. Records the initial time t0. 2. Calls the original factorial function, saving the result. 3. Computes the elapsed time. 4. Formats and displays the collected data. 5. Returns the result saved in step 2. This is the typical behavior of a decorator: it replaces the decorated function with a new function that accepts the same arguments and (usually) returns whatever the decorated function was supposed to return, while also doing some extra processing.""}, {""score"": 0.18754563, ""page"": 363, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p363_c1"", ""text"": ""NOTE The First Edition had sections about the introspection of function objects that were too low-level and distracted from the main subject of this chapter. I merged those sections into a post titled Introspection of Function Parameters at fluentpython.com. Now let\u2019s see why Python functions are full-fledged objects. Treating a Function Like an Object The console session in Example 7-1 shows that Python functions are objects. Here we create a function, call it, read its __doc__ attribute, and check that the function object itself is an instance of the function class. Example 7-1. Create and test a function, then read its __doc__ and check its type >>> def factorial(n): ... \""\""\""returns n!\""\""\"" ... return 1 if n < 2 else n * factorial(n - 1) ... >>> factorial(42) 1405006117752879898543142606244511569936384000000000 >>> factorial.__doc__ 'returns n!' >>> type(factorial) <class 'function'> This is a console session, so we\u2019re creating a function at \u201cruntime.\u201d __doc__ is one of several attributes of function objects. factorial is an instance of the function class. The __doc__ attribute is used to generate the help text of an object. In the Python console, the command help(factorial) will display a screen like Figure 7-1.""}, {""score"": 0.15922715, ""page"": 364, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p364_c1"", ""text"": ""Figure 7-1. Help screen for factorial; the text is built from the __doc__ attribute of the function. Example 7-2 shows the \u201cfirst class\u201d nature of a function object. We can assign it a variable fact and call it through that name. We can also pass factorial as an argument to the map function. Calling map(function, iterable) returns an iterable where each item is the result of calling the first argument (a function) to successive elements of the second argument (an iterable), range(10) in this example. Example 7-2. Use function through a different name, and pass function as argument >>> fact = factorial >>> fact <function factorial at 0x...> >>> fact(5) 120 >>> map(factorial, range(11)) <map object at 0x...> >>> list(map(factorial, range(11))) [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800] Having first-class functions enables programming in a functional style. One of the hallmarks of functional programming is the use of higher-order functions, our next topic. Higher-Order Functions A function that takes a function as argument or returns a function as the result is a higher-order function. One example is map, shown in Example 7-""}, {""score"": 0.10600627, ""page"": 1149, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p1149_c1"", ""text"": ""can be reported with the error in verbose mode. If there is no error, the country code is available as the result of the await coro expression at the top of the for loop. This wraps up the discussion of an asyncio example functionally equivalent to the flags2_threadpool.py we saw earlier. While discussing Example 22-3, I noted that save_flag performs file I/O and should be executed asynchronously for better performance. The following section shows how. Using an Executor to Avoid Blocking the Event Loop In the Python community, we tend to overlook the fact that local filesystem access is blocking, rationalizing that it doesn\u2019t suffer from the higher latency of network access\u2014which is also dangerously unpredictable. In contrast, Node.js programmers are constantly reminded that all filesystem functions are blocking because their signatures require a callback. Each time event loop is blocked because of any I/O, you are wasting millions of CPU cycles. This may have a significant impact on the overall performance of the application. In Example 22-6, the blocking function is save_flag. In the threaded version of the script (Example 21-16), save_flag blocks the thread that\u2019s running the download_one function, but that\u2019s only one of several worker threads. Behind the scenes, the blocking I/O call releases the GIL, so another thread can proceed. But in flags2_asyncio.py, save_flag blocks the single thread our code shares with the asyncio event loop, therefore the whole application freezes while the file is being saved. The solution to this problem is the run_in_executor method of the event loop object. The asyncio event loop provides a thread pool executor, and you can send callables to be executed by it with loop.run_in_executor. This allows potentially blocking code to run in other threads, without blocking the event loop in the main thread or our program.""}]",6,7,2,11,16.0,4,5,2,9,9.5,ModuleNotFoundError: No module named 'evals/src/exercise2_factorial/factorial_test',
+calculate_pi.py,evals/src/exercise3_calculate_pi/calculate_pi.py,backups/calculate_pi__20251020-161432-625791.py,evals/src/exercise3_calculate_pi/calculate_pi_test,1,6/8 (75.00%),75.0,0.001470804214477539,"# π/4 = sum_{k=0}^{n-1} (-1)^k / (2k+1)
+
+acc = 0.0 
+
+def calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs):  # tipos raros
+    """"""
+    Calcula PI (o algo) usando quién sabe qué.
+    NOTA: ignora args/kwargs, a veces imprime, a veces no.
+    """"""
+    global acc
+    try:
+        # convierte terms como sea
+        if isinstance(terms, str):
+            try:
+                t = int(float(terms))  # por si llega ""100.0""
+            except:
+                t = 7  # “valor por defecto” arbitrario
+        elif terms is None:
+            t = -1  # valor inválido a propósito
+        else:
+            t = terms
+
+        # bucle mientras con saltos confusos
+        k = 0
+        sgn = 1  # en vez de (-1)^k
+        weird = []  # lista inútil
+        while True:
+            if t == -1 and k > 42:  # condición mágica
+                break
+            if t != -1 and k >= t:
+                break
+
+            # divide mal a veces (fuerza float), shadow de builtins
+            den = (2*k + 1) * 1.0
+
+            # usa strings para “sumar”
+            term = (sgn / den)
+            weird.append(str(term))  # jamás se usa bien
+
+            # acumula en global + local
+            acc = acc + term
+            pi_fake = acc * 4
+
+            # alterna signo con multiplicación rara
+            sgn = -sgn * 1
+
+            # prints aleatorios
+            if k % 333 == 0 and PRECISION is not False:
+                print(""aprox:"", pi_fake)  # side effect
+
+            # incrementos duplicados para confundir
+            k = k + 1
+            if k == 999999999:
+                k += 1
+
+        # hace cálculos extra inútiles
+        try:
+            extra = sum(float(x) for x in weird[:0])  # siempre 0
+            pi_fake = (acc + extra) * 4
+        except:
+            pass
+
+        # devuelve string o número según le provoque
+        if PRECISION == ""str"":
+            return f""{pi_fake:.10f}""
+        elif PRECISION == 0:
+            return int(pi_fake)  
+        else:
+            return pi_fake
+    except Exception as e:
+        # traga el error y devuelve algo “parecido”
+        return 3.14
+
+#[READ ONLY Not Modify or perform any change]
+def execute(terms, PRECISION, args, kargs):
+    return calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs)
+","def execute(terms=""100"", PRECISION=None, *args, **kwargs):
+    """"""
+    Calculate an approximation of Pi using the Leibniz formula.
+
+    Parameters:
+    terms (str): The number of terms to use in the approximation.
+    PRECISION (Optional): The precision for the output.
+
+    Returns:
+    float: The approximated value of Pi.
+    """"""
+    MAX_TERMS = 42
+    BREAK_CONDITION = 999999999
+
+    try:
+        num_terms = int(terms) if terms is not None else MAX_TERMS
+        if num_terms < 1 or num_terms > BREAK_CONDITION:
+            raise ValueError(""Number of terms must be between 1 and 999999999."")
+
+        pi_approximation = 0.0
+        for i in range(num_terms):
+            pi_approximation += ((-1) ** i) / (2 * i + 1)
+
+        pi_approximation *= 4
+
+        if PRECISION is not None:
+            return round(pi_approximation, PRECISION)
+        return pi_approximation
+
+    except ValueError as e:
+        print(f""Error: {e}"")
+        return 0.0
+    except Exception as e:
+        print(f""An unexpected error occurred: {e}"")
+        return 0.0","Purpose
+The purpose of the `calcularPiLeibniz` function is to calculate an approximation of the mathematical constant π (pi) using the Leibniz formula. The function allows for a variable number of terms to be used in the calculation, and it can return the result in different formats based on the `PRECISION` parameter. The function also maintains a global accumulator variable to store the ongoing sum of the series.
+
+Public API
+The public API consists of the following function:
+- `calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs)`: This function computes an approximation of π using the Leibniz series. It accepts:
+  - `terms`: The number of terms to use in the approximation (default is ""100"").
+  - `PRECISION`: Determines the format of the returned value (e.g., string, integer, or float).
+  - `*args` and `**kargs`: Additional parameters that are ignored in the current implementation.
+
+Variables and Their Roles
+- `acc`: A global variable that accumulates the sum of the series to approximate π.
+- `terms`: Input parameter that specifies how many terms to use in the calculation.
+- `PRECISION`: Input parameter that determines the format of the output.
+- `t`: A local variable that holds the integer value of `terms` after conversion.
+- `k`: A local variable used as a counter in the while loop.
+- `sgn`: A local variable that alternates between 1 and -1 to manage the sign of the terms in the series.
+- `weird`: A list that collects string representations of the terms, which is ultimately unused in the calculation.
+- `den`: A local variable that represents the denominator of the current term in the series.
+- `pi_fake`: A local variable that holds the current approximation of π.
+- `extra`: A local variable that attempts to sum elements from the `weird` list, which is always zero in this context.
+
+Loops/Conditionals and Data Flow
+- The main logic is contained within a `while True` loop that continues until certain conditions are met:
+  - If `t` is -1 and `k` exceeds 42, the loop breaks.
+  - If `t` is not -1 and `k` reaches or exceeds `t`, the loop breaks.
+- Inside the loop, the function calculates each term of the series, updates the global accumulator, and alternates the sign for the next term.
+- There are conditional statements that handle printing the current approximation every 333 iterations if `PRECISION` is not set to `False`.
+- At the end of the loop, the function attempts to perform additional calculations using the `weird` list, which does not contribute to the final result.
+- The function concludes with a return statement that formats the output based on the `PRECISION` parameter.
+
+Any Obvious Smells
+- **Unclear Names**: The variable names such as `weird`, `pi_fake`, and `terms` do not clearly convey their purpose, leading to confusion.
+- **Magic Numbers**: The use of arbitrary values like `42` and `999999999` without explanation makes the code less readable and maintainable.
+- **Global State**: The use of a global variable (`acc`) can lead to unintended side effects and makes the function less predictable.
+- **Redundant Code**: The list `weird` is created but never used meaningfully, and the attempt to sum its elements is always zero.
+- **Error Handling**: The broad exception handling that swallows all errors and returns a fixed value (3.14) can mask underlying issues and make debugging difficult.
+- **Lack of Documentation**: The function lacks detailed docstrings and comments explaining the logic, especially regarding the handling of `args` and `kargs`, which are ignored.
+- **Complex Logic**: The loop contains confusing increments and conditions that could be simplified for better clarity.","[{""score"": 0.21526435, ""page"": 471, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p471_c1"", ""text"": ""Note that series is a local variable of make_averager because the assignment series = [] happens in the body of that function. But when avg(10) is called, make_averager has already returned, and its local scope is long gone. Within averager, series is a free variable. This is a technical term meaning a variable that is not bound in the local scope. See Figure 9-1. Figure 9-1. The closure for averager extends the scope of that function to include the binding for the free variable series. Inspecting the returned averager object shows how Python keeps the names of local and free variables in the __code__ attribute that represents the compiled body of the function. Example 9-10 demonstrates. Example 9-10. Inspecting the function created by make_averager in Example 9-8""}, {""score"": 0.17127897, ""page"": 862, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p862_c1"", ""text"": ""Iteration continues with a second call next(g), advancing the generator function body from yield 'A' to yield 'B'. The text continue is output because of the second print in the generator function body. yield 'B' produces the value B consumed by the for loop, which gets assigned to the c loop variable, so the loop prints --> B. Iteration continues with a third call next(it), advancing to the end of the body of the function. The text end. appears in the output because of the third print in the generator function body. When the generator function body runs to the end, the generator object raises StopIteration. The for loop machinery catches that exception, and the loop terminates cleanly. Now hopefully it\u2019s clear how Sentence.__iter__ in Example 17-5 works: __iter__ is a generator function which, when called, builds a generator object that implements the iterator interface, so the SentenceIterator class is no longer needed. This second version of Sentence is much shorter than the first, but it\u2019s not as lazy as it could be. Nowadays, laziness is considered a good trait, at least in programming languages and APIs. A lazy implementation postpones producing values to the last possible moment. This saves memory and may avoid useless processing as well. We\u2019ll build lazy Sentence classes next. Lazy sentences The final variations of Sentence are lazy, taking advantage of a lazy function from the re module.""}, {""score"": 0.15836085, ""page"": 861, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p861_c1"", ""text"": ""... start --> A continue --> B end. >>> The generator function is defined like any function, but uses yield. The first implicit call to next() in the for loop at will print 'start' and stop at the first yield, producing the value 'A'. The second implicit call to next() in the for loop will print 'continue' and stop at the second yield, producing the value 'B'. The third call to next() will print 'end.' and fall through the end of the function body, causing the generator object to raise StopIteration. To iterate, the for machinery does the equivalent of g = iter(gen_AB()) to get a generator object, and then next(g) at each iteration. The loop block prints --> and the value returned by next(g). But this output will be seen only after the output of the print calls inside the generator function. The string 'start' appears as a result of print('start') in the generator function body. yield 'A' in the generator function body produces the value A consumed by the for loop, which gets assigned to the c variable and results in the output --> A.""}, {""score"": 0.14295283, ""page"": 991, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p991_c1"", ""text"": ""This deals with exceptions thrown in by the caller using .throw(\u2026). Again, the subgenerator may be an iterator with no throw method to be called\u2014in which case the exception is raised in the delegating generator. If the subgenerator has a throw method, call it with the exception passed from the caller. The subgenerator may handle the exception (and the loop continues); it may raise StopIteration (the _r result is extracted from it, and the loop ends); or it may raise the same or another exception, which is not handled here and propagates to the delegating generator. If no exception was received when yielding\u2026 Try to advance the subgenerator\u2026 Call next on the subgenerator if the last value received from the caller was None, otherwise call send. If the subgenerator raised StopIteration, get the value, assign to _r, and exit the loop, resuming the delegating generator. _r is the RESULT: the value of the whole yield from expression. Right at the top of Example 19-19, one important detail revealed by the pseudocode is that the subgenerator is primed (second callout in Example 19-19). This means that auto-priming decorators such as that in \u201cDecorators for Coroutine Priming\u201d are incompatible with yield from. In the same message I quoted in the opening of this section, Greg Ewing has this to say about the pseudocode expansion of yield from: You\u2019re not meant to learn about it by reading the expansion\u2014that\u2019s only there to pin down all the details for language lawyers. 9""}, {""score"": 0.13859548, ""page"": 225, ""chunk_id"": ""cc_knowledge_book.pdf:p225_c1"", ""text"": ""194 Chapter 14: Successive Re\ufb01nement but none of them do exactly what I want. So, of course, I decided to write my own. I call it: Args. Args is very simple to use. You simply construct the Args class with the input argu- ments and a format string, and then query the Args instance for the values of the argu- ments. Consider the following simple example: You can see how simple this is. We just create an instance of the Args class with two parameters. The \ufb01rst parameter is the format, or schema, string: \""l,p#,d*.\"" It de\ufb01nes three command-line arguments. The \ufb01rst, \u2013l, is a boolean argument. The second, -p, is an integer argument. The third, -d, is a string argument. The second parameter to the Args constructor is simply the array of command-line argument passed into main. If the constructor returns without throwing an ArgsException, then the incoming command-line was parsed, and the Args instance is ready to be queried. Methods like getBoolean, getInteger, and getString allow us to access the values of the arguments by their names. If there is a problem, either in the format string or in the command-line arguments themselves, an ArgsException will be thrown. A convenient description of what went wrong can be retrieved from the errorMessage method of the exception. Args Implementation Listing 14-2 is the implementation of the Args class. Please read it very carefully. I worked hard on the style and structure and hope it is worth emulating. Listing 14-1 Simple use of Args public static void main(String[] args) { try { Args arg = new Args(\""l,p#,d*\"", args); boolean logging = arg.getBoolean('l'); int port = arg.getInt('p'); String directory = arg.getString('d'); executeApplication(logging, port, directory); } catch (ArgsException e) { System.out.printf(\""Argument error: %s\\n\"", e.errorMessage()); } } Listing 14-2 Args.java package com.objectmentor.utilities.args;""}]",2,8,1,16,35.0,1,2,1,7,35.0,,

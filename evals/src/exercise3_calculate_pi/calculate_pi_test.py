@@ -1,7 +1,22 @@
 import unittest
 import sys
 import io
-from calculate_pi import execute
+import os
+
+# Try both absolute and relative imports to handle different execution contexts
+try:
+    # Absolute import for when running from notebook or other directories
+    from evals.src.exercise3_calculate_pi.calculate_pi import execute
+except ImportError:
+    # Relative import for when running from the same directory
+    try:
+        from calculate_pi import execute
+    except ImportError:
+        # Add the current directory to sys.path as a fallback
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        from calculate_pi import execute
 
 class TestCalculatePi(unittest.TestCase):
     
