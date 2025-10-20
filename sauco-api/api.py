@@ -73,7 +73,7 @@ async def improve(req: ImproveRequest):
     except Exception as e:
         print(f" Error 500 - {str(e)}")
         stacktrace = traceback.format_exc()  # 🔹 Captura todo el stacktrace como string
-        print(error_message)
+        print(stacktrace)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/retrieve_context", response_model=RetrieveContextResponse)
