@@ -132,6 +132,8 @@ class ImprovementService:
             
             Return plain text (no markdown fences)
 
+            IMPORTANT: NEVER take care of the "execute" Function or its params because is used to perform functional tests. 
+
             CODE:
             {code}
             """
@@ -255,6 +257,8 @@ class ImprovementService:
         Code:
         {code}
 
+        IMPORTANT: NEVER RECOMEND CHANGE THE "execute" Function or its params because is used to perform functional tests. 
+
         Return 5-10 bullet points (short, actionable). No extra commentary.
         """
         resp = self.client.chat.completions.create(
@@ -283,6 +287,8 @@ class ImprovementService:
 
             IMPORTANT: Return ONLY the improved code with no markdown fences, no ```python markers, 
             and no explanations. Just the raw code itself.
+
+            IMPORTANT: NEVER CHANGE THE "execute" Function or its params because is used to perform functional tests. 
             """
         resp = self.client.chat.completions.create(
             model=self.model,
