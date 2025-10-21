@@ -1,0 +1,6 @@
+exercise,implementation,test,coverage_percentage,html_report
+exercise1_fibonacci,fibonacci.py,fibonacci_test.py,80.72%,coverage_html/exercise1_fibonacci
+exercise2_factorial,factorial.py,factorial_test.py,57.69%,coverage_html/exercise2_factorial
+exercise3_calculate_pi,calculate_pi.py,calculate_pi_test.py,80.19%,coverage_html/exercise3_calculate_pi
+exercise4_hanoi,hanoi_towers.py,hanoi_towers_test.py,54.86%,coverage_html/exercise4_hanoi
+exercise5_roman_converter,roman_converter.py,roman_converter_test.py,88.74%,coverage_html/exercise5_roman_converter

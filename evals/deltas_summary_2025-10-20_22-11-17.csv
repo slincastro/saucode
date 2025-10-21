@@ -1,0 +1,6 @@
+code_file,Δ_ifs,Δ_loops,Δ_cyclomatic_complexity,Δ_avg_method_size,Δ_method_number
+fibonacci.py,-3,-2,-5,2.5,0
+factorial.py,1,1,2,9.667,-3
+calculate_pi.py,-4,0,-8,-18.333,1
+hanoi_towers.py,-7,-1,-15,-24.667,-1
+roman_converter.py,-11,-1,-21,-1.667,-2

@@ -141,7 +141,7 @@ class ImprovementService:
             """
         resp = self.client.chat.completions.create(
             model=self.model,
-            temperature=0.0,
+        #    temperature=0.0,
             messages=[
                 {"role": "system", "content": "Be precise and structured."},
                 {"role": "user", "content": prompt}
@@ -265,7 +265,7 @@ class ImprovementService:
         """
         resp = self.client.chat.completions.create(
             model=self.model,
-            temperature=0.0,
+        #    temperature=0.0,
             messages=[
                 {"role": "system", "content": "Be concise and actionable."},
                 {"role": "user", "content": prompt}
@@ -320,7 +320,7 @@ class ImprovementService:
         """
         resp = self.client.chat.completions.create(
             model=self.model,
-            temperature=0.0,
+        #    temperature=0.0,
             messages=[
                 {"role": "system", "content": "Return only the raw improved code; no code block markers, no explanations."},
                 {"role": "user", "content": prompt}
