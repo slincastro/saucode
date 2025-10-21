@@ -1,0 +1,868 @@
+code_file,code_file_path,backup_path,test_file,iteration,tests,percentage_of_success,execution_time,original_code,improved_code,analysis,retrieved_context,before_method_number,before_ifs,before_loops,before_cyclomatic_complexity,before_avg_method_size,before_max_nesting,after_method_number,after_ifs,after_loops,after_cyclomatic_complexity,after_avg_method_size,after_max_nesting,error,error_details
+fibonacci.py,src/exercise1_fibonacci/fibonacci.py,backups/fibonacci__20251020-184621-471141.py,./src/exercise1_fibonacci/fibonacci_test.py,1,9/9 (100.00%),100.0,0.000347137451171875,"def f(a=0, b=1, n=10, x=None, c=True, *args, **kwargs):
+    print(""Empezando el calculo de algo..."")
+    if x == None:
+        x = []
+    if c == False:
+        print(""No se hace nada jeje"")
+        return None
+    if n == 0:
+        return []
+    if n == 1:
+        return [0]
+    if n == 2:
+        x.append(0)
+        x.append(1)
+    else:
+        x = [0]
+        x.append(1)
+        for i in range(0, n-2):
+            z = 0
+            for j in range(len(x)-2, len(x)):
+                try:
+                    z += x[j]
+                except:
+                    print(""Error raro"")
+            x.append(z)
+        if len(x) > 9999:
+            print(""Demasiados numeros, pero igual seguimos..."")
+    if len(x) > 0:
+        print(""Resultado (no optimizado):"", x)
+    else:
+        print(""Algo salio mal, pero no importa"")
+    # codigo muerto
+    for k in range(0):
+        print(""Nunca pasa esto"")
+    a = 123
+    b = ""hola""
+    c = [a, b, x]
+    return x
+
+#[READ ONLY Not Modify or perform any change]
+def execute(a=0, b=1, n=10, x=None, c=True, *args, **kwargs):
+    return f(a,b,n,x,c,args,kwargs)
+","import functools
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+@functools.cache
+def generate_fibonacci_sequence(n):
+    """"""Generate a Fibonacci sequence up to the nth number.
+
+    Args:
+        n (int): The length of the Fibonacci sequence to generate.
+
+    Returns:
+        list: A list containing the Fibonacci sequence up to the nth number.
+    """"""
+    if n < 2:
+        return [0] if n == 1 else []
+    
+    sequence = [0, 1]
+    for i in range(2, n):
+        next_value = sum(sequence[-2:])
+        sequence.append(next_value)
+    
+    return sequence
+
+def execute(a=None, b=None, n=0, c=True, x=None, *args, **kwargs):
+    """"""Main orchestrator for generating Fibonacci sequence.
+
+    Args:
+        a (int, optional): Unused parameter.
+        b (int, optional): Unused parameter.
+        n (int, optional): The length of the Fibonacci sequence to generate.
+        c (bool, optional): A flag that, if False, will return None.
+        x (list, optional): A list to append the sequence to.
+
+    Returns:
+        list or None: The generated Fibonacci sequence or None if c is False.
+    """"""
+    if not c:
+        return None
+    
+    x = x or []
+    fibonacci_sequence = generate_fibonacci_sequence(n)
+    return x + fibonacci_sequence","Purpose
+The function `f` is designed to perform a calculation that appears to generate a sequence of numbers based on the Fibonacci-like series, depending on the input parameter `n`. It initializes a list `x` to store the results and handles various edge cases, such as when `n` is 0, 1, or 2. The function also includes print statements for debugging and user feedback, indicating the progress and results of the computation.
+
+Public API
+The public API of the function consists of a single function:
+- `f(a=0, b=1, n=10, x=None, c=True, *args, **kwargs)`: 
+  - Parameters:
+    - `a`: An integer, defaulting to 0, but not used in the calculation.
+    - `b`: An integer, defaulting to 1, but not used in the calculation.
+    - `n`: An integer that determines the length of the sequence to generate.
+    - `x`: A list that stores the generated sequence, defaulting to None.
+    - `c`: A boolean flag that controls whether the function performs its main logic or exits early.
+    - `*args` and `**kwargs`: Additional arguments that are not utilized in the function.
+
+Variables and Their Roles
+- `a`: An integer parameter that is not utilized in the function's logic.
+- `b`: An integer parameter that is also not utilized in the function's logic.
+- `n`: An integer that determines how many numbers to generate in the sequence.
+- `x`: A list that holds the generated sequence. It is initialized to an empty list if not provided.
+- `c`: A boolean flag that, when set to False, causes the function to exit early without performing calculations.
+- `z`: A temporary variable used to accumulate the sum of the last two elements of the list `x` during the loop.
+- `i`, `j`, `k`: Loop control variables used for iterating through ranges and lists.
+
+Loops/Conditionals and Data Flow
+- The function begins with a series of conditional checks:
+  - If `x` is None, it initializes `x` as an empty list.
+  - If `c` is False, it prints a message and returns None.
+  - If `n` is 0, it returns an empty list.
+  - If `n` is 1, it returns a list containing only 0.
+  - If `n` is 2, it appends 0 and 1 to `x`.
+- For `n` greater than 2, it initializes `x` with 0 and 1, then enters a loop to generate the next numbers in the sequence by summing the last two elements of `x`.
+- An inner loop attempts to sum the last two elements of `x`, with a try-except block that catches any errors (though it is unclear what errors are expected).
+- After generating the sequence, it checks if the length of `x` exceeds 9999 and prints a warning if so.
+- Finally, it prints the result or an error message based on the length of `x`.
+
+Any Obvious Smells
+- **Unclear Names**: The function and variable names are not descriptive. For example, `f` does not convey any meaning about its purpose.
+- **Unused Parameters**: The parameters `a` and `b` are defined but not used in the function, which can lead to confusion.
+- **Dead Code**: The loop `for k in range(0):` is never executed, indicating that it is unnecessary and should be removed.
+- **Error Handling**: The use of a broad `try-except` block without specifying the exception type is not a good practice, as it can mask other issues.
+- **Lack of Documentation**: The function lacks docstrings or comments explaining its purpose, parameters, and return values, making it difficult for other developers to understand its functionality.
+- **Print Statements for Debugging**: The function relies heavily on print statements for feedback, which is not ideal for production code. A logging mechanism would be more appropriate.","[{""score"": 0.12834886, ""page"": 480, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p480_c1"", ""text"": ""return fibonacci(n - 2) + fibonacci(n - 1) if __name__ == '__main__': print(fibonacci(6)) Here is the result of running fibo_demo.py. Except for the last line, all output is generated by the clock decorator: $ python3 fibo_demo.py [0.00000042s] fibonacci(0) -> 0 [0.00000049s] fibonacci(1) -> 1 [0.00006115s] fibonacci(2) -> 1 [0.00000031s] fibonacci(1) -> 1 [0.00000035s] fibonacci(0) -> 0 [0.00000030s] fibonacci(1) -> 1 [0.00001084s] fibonacci(2) -> 1 [0.00002074s] fibonacci(3) -> 2 [0.00009189s] fibonacci(4) -> 3 [0.00000029s] fibonacci(1) -> 1 [0.00000027s] fibonacci(0) -> 0 [0.00000029s] fibonacci(1) -> 1 [0.00000959s] fibonacci(2) -> 1 [0.00001905s] fibonacci(3) -> 2 [0.00000026s] fibonacci(0) -> 0 [0.00000029s] fibonacci(1) -> 1 [0.00000997s] fibonacci(2) -> 1 [0.00000028s] fibonacci(1) -> 1 [0.00000030s] fibonacci(0) -> 0 [0.00000031s] fibonacci(1) -> 1 [0.00001019s] fibonacci(2) -> 1 [0.00001967s] fibonacci(3) -> 2 [0.00003876s] fibonacci(4) -> 3 [0.00006670s] fibonacci(5) -> 5 [0.00016852s] fibonacci(6) -> 8 8 The waste is obvious: fibonacci(1) is called eight times, fibonacci(2) five times, etc. But adding just two lines to use cache, performance is much improved. See Example 9-18. Example 9-18. Faster implementation using caching import functools from clockdeco import clock""}, {""score"": 0.120594166, ""page"": 482, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p482_c1"", ""text"": ""$ python3 fibo_demo_lru.py [0.00000043s] fibonacci(0) -> 0 [0.00000054s] fibonacci(1) -> 1 [0.00006179s] fibonacci(2) -> 1 [0.00000070s] fibonacci(3) -> 2 [0.00007366s] fibonacci(4) -> 3 [0.00000057s] fibonacci(5) -> 5 [0.00008479s] fibonacci(6) -> 8 8 In another test, to compute fibonacci(30), Example 9-18 made the 31 calls needed in 0.00017s\u2014total time\u2013while the uncached Example 9-17 took 12.09s on an Intel Core i7 notebook, because it called fibonacci(1) 832,040 times, in a total of 2,692,537 calls. All the arguments taken by the decorated function must be hashable, because the underlying lru_cache uses a dict to store the results, and the keys are made from the positional and keyword arguments used in the calls. Besides making silly recursive algorithms viable, @cache really shines in applications that need to fetch information from remote APIs. WARNING functools.cache can consume all available memory if there is a very large number of cache entries. I consider it more suitable for use in short lived command-line scripts. In long running processes, I recommend using functools.lru_cache with a suitable maxsize parameter, as explained in the next section. Using lru_cache The functools.cache decorator is actually a simple wrapper around the older functools.lru_cache function, which is more flexible and compatible with Python 3.8 and earlier versions. The main advantage of @lru_cache is that its memory usage is bounded by the maxsize parameter, which has a rather conservative default value""}, {""score"": 0.11793595, ""page"": 343, ""chunk_id"": ""cc_knowledge_book.pdf:p343_c1"", ""text"": ""312 Chapter 17: Smells and Heuristics the terms from this language extensively. In short, the more you can use names that are overloaded with special meanings that are relevant to your project, the easier it will be for readers to know what your code is talking about. N4: Unambiguous Names Choose names that make the workings of a function or variable unambiguous. Consider this example from FitNesse: private String doRename() throws Exception { if(refactorReferences) renameReferences(); renamePage(); pathToRename.removeNameFromEnd(); pathToRename.addNameToEnd(newName); return PathParser.render(pathToRename); } The name of this function does not say what the function does except in broad and vague terms. This is emphasized by the fact that there is a function named renamePage inside the function named doRename! What do the names tell you about the difference between the two functions? Nothing. A better name for that function is renamePageAndOptionallyAllReferences. This may seem long, and it is, but it\u2019 s only called from one place in the module, so it\u2019 s explanatory value outweighs the length. N5: Use Long Names for Long Scopes The length of a name should be related to the length of the scope. Y ou can use very short variable names for tiny scopes, but for big scopes you should use longer names. Variable names like i and j are just \ufb01ne if their scope is \ufb01ve lines long. Consider this snippet from the old standard \u201cBowling Game\u201d: private void rollMany(int n, int pins) { for (int i=0; i<n; i++) g.roll(pins); } This is perfectly clear and would be obfuscated if the variable i were replaced with some- thing annoying like rollCount. On the other hand, variables and functions with short names lose their meaning over long distances. So the longer the scope of the name, the longer and more precise the name should be. N6:""}, {""score"": 0.116300814, ""page"": 481, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p481_c1"", ""text"": ""@functools.cache @clock def fibonacci(n): if n < 2: return n return fibonacci(n - 2) + fibonacci(n - 1) if __name__ == '__main__': print(fibonacci(6)) This line works with Python 3.9 or later. See \u201cUsing lru_cache\u201d for alternatives supporting earlier versions of Python. This is an example of stacked decorators: @cache is applied on the function returned by @clock. STACKED DECORATORS To make sense of stacked decorators, recall that the @ is syntax sugar for applying the decorator function to the function below it. If there\u2019s more than one decorator, they behave like nested function calls. This: @alpha @beta def my_fn(): ... Is the same as this: my_fn = alpha(beta(my_fn)) In other words, the beta decorator is applied first, and the function it returns is then passed to alpha. Using cache in Example 9-18, the fibonacci function is called only once for each value of n:""}, {""score"": 0.11205602, ""page"": 225, ""chunk_id"": ""cc_knowledge_book.pdf:p225_c1"", ""text"": ""194 Chapter 14: Successive Re\ufb01nement but none of them do exactly what I want. So, of course, I decided to write my own. I call it: Args. Args is very simple to use. You simply construct the Args class with the input argu- ments and a format string, and then query the Args instance for the values of the argu- ments. Consider the following simple example: You can see how simple this is. We just create an instance of the Args class with two parameters. The \ufb01rst parameter is the format, or schema, string: \""l,p#,d*.\"" It de\ufb01nes three command-line arguments. The \ufb01rst, \u2013l, is a boolean argument. The second, -p, is an integer argument. The third, -d, is a string argument. The second parameter to the Args constructor is simply the array of command-line argument passed into main. If the constructor returns without throwing an ArgsException, then the incoming command-line was parsed, and the Args instance is ready to be queried. Methods like getBoolean, getInteger, and getString allow us to access the values of the arguments by their names. If there is a problem, either in the format string or in the command-line arguments themselves, an ArgsException will be thrown. A convenient description of what went wrong can be retrieved from the errorMessage method of the exception. Args Implementation Listing 14-2 is the implementation of the Args class. Please read it very carefully. I worked hard on the style and structure and hope it is worth emulating. Listing 14-1 Simple use of Args public static void main(String[] args) { try { Args arg = new Args(\""l,p#,d*\"", args); boolean logging = arg.getBoolean('l'); int port = arg.getInt('p'); String directory = arg.getString('d'); executeApplication(logging, port, directory); } catch (ArgsException e) { System.out.printf(\""Argument error: %s\\n\"", e.errorMessage()); } } Listing 14-2 Args.java package com.objectmentor.utilities.args;""}]",2,7,3,12,20.0,5,2,2,1,5,18.5,2,,
+factorial.py,src/exercise2_factorial/factorial.py,backups/factorial__20251020-184642-835610.py,./src/exercise2_factorial/factorial_test.py,1,ERROR,0.0,0.0,"
+def generate_factorial():
+    def factorialFunction(n, acc=1):
+        # esta funcion calcula el factorial pero tiene muchos errores y malas practicas
+        if n == 0: 
+            return 1
+        if n == 1:
+            print(""factorial of 1 is 1"")
+            return acc
+        else:
+            result = 1
+            for i in range(1, n+1):
+                result = result * i
+                if i == n-1:
+                    print(""almost done..."")
+            # recursivamente lo vuelve a llamar porque si
+            return factorialFunction(n-1) * result / acc
+
+    def fact(x):
+        if type(x) != int:
+            print(""Error, input not integer, returning -1"")
+            return -1
+        elif x < 0:
+            print(""Negative value, converting to positive"")
+            x = -x
+        elif x == 99999:
+            print(""That's too big!!"")
+        else:
+            print(""computing factorial of"", x)
+        
+        temp = 0
+        while temp < 1:
+            try:
+                val = factorialFunction(x)
+                print(""final value is"", val)
+                temp = 2
+            except:
+                print(""error occurred, trying again"")
+                temp = temp + 1
+        
+        if temp == 2:
+            print(""ok finished"")
+        else:
+            print(""something wrong happened still"")
+        
+        return val
+    
+    return fact
+
+# For backward compatibility
+def factorialFunction(n, acc=1):
+    return generate_factorial()(n)
+
+def fact(x):
+    return generate_factorial()(x)
+
+#[READ ONLY Not Modify or perform any change]
+def execute(n, acc=1):
+    return factorialFunction(n, acc)
+","import time
+from clockdeco0 import clock
+
+MAX_FACTORIAL_INPUT = 99999
+
+@clock
+def snooze(seconds: float) -> None:
+    """"""Pause execution for a given number of seconds.""""""
+    time.sleep(seconds)
+
+def factorial(n: int) -> int:
+    """"""Calculate the factorial of a non-negative integer n iteratively.""""""
+    if n < 0:
+        raise ValueError(""Input must be a non-negative integer."")
+    if n == 0:
+        return 1
+    result = 1
+    for i in range(1, n + 1):
+        result *= i
+    return result
+
+def fact(x: int) -> int:
+    """"""Compute the factorial of x, handling various input cases.""""""
+    if not isinstance(x, int):
+        return -1
+    if x < 0:
+        x = -x
+    if x == MAX_FACTORIAL_INPUT:
+        raise ValueError(""Input too large."")
+    
+    return factorial(x)
+
+def execute(n: int, *args, **kwargs) -> int:
+    """"""Public entry point to compute the factorial of n.""""""
+    try:
+        return fact(n)
+    except Exception as e:
+        print(f""An error occurred: {e}"")
+        return None
+
+if __name__ == '__main__':
+    print('*' * 40, 'Calling snooze(.123)')
+    snooze(.123)
+    print('*' * 40, 'Calling factorial(6)')
+    print('6! =', factorial(6))","Purpose
+The purpose of the provided code is to generate a factorial calculation function. It includes a nested function `factorialFunction` that computes the factorial of a given integer, and another function `fact` that serves as a public interface for users to compute the factorial while handling input validation and error management. The code also includes backward compatibility functions for legacy support.
+
+Public API
+The public API consists of the following functions:
+1. `generate_factorial()`: This function returns the `fact` function, which is the main interface for calculating factorials.
+2. `factorialFunction(n, acc=1)`: A private function that computes the factorial recursively but is not intended for direct use outside of the `generate_factorial` context.
+3. `fact(x)`: A private function that validates input and calls `factorialFunction` to compute the factorial.
+4. `factorialFunction(n, acc=1)`: A backward compatibility function that allows users to call the factorial calculation directly.
+5. `fact(x)`: Another backward compatibility function that allows users to call the factorial calculation directly.
+
+Variables and Their Roles
+- `n`: Represents the integer input for which the factorial is to be calculated.
+- `acc`: An accumulator used in the recursive calculation of the factorial (default is 1).
+- `x`: The input to the `fact` function, which is validated before being processed.
+- `temp`: A control variable used in a while loop to manage retries in case of errors during the factorial calculation.
+- `result`: A variable used to store the intermediate result of the factorial calculation within `factorialFunction`.
+
+Loops/Conditionals and Data Flow
+- The `fact` function contains several conditionals to validate the input:
+  - Checks if `x` is an integer.
+  - Checks if `x` is negative and converts it to positive.
+  - Checks if `x` is equal to 99999 and prints a warning.
+- A while loop is used to attempt the factorial calculation, retrying up to two times if an error occurs.
+- The `factorialFunction` uses a for loop to calculate the factorial iteratively, with a conditional to print a message when nearing completion.
+- The data flow involves passing the validated input `x` to `factorialFunction`, which computes the factorial and returns the result back to `fact`, which then returns it to the caller.
+
+Any Obvious Smells
+- The `factorialFunction` contains a comment indicating that it has ""many errors and bad practices,"" which suggests it may not be reliable.
+- The use of print statements for error handling and status updates is not ideal; exceptions should be raised or logged instead.
+- The variable names such as `temp` and `acc` are not descriptive enough, making the code harder to understand.
+- The `factorialFunction` is overly complex and combines both iterative and recursive logic, which can lead to confusion.
+- The lack of docstrings for functions makes it difficult to understand their purpose and usage.
+- The while loop in `fact` is not a standard practice for error handling; it could lead to infinite loops if not managed correctly.
+- The use of a magic number (99999) without explanation can lead to confusion and should be avoided.","[{""score"": 0.24085516, ""page"": 476, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p476_c1"", ""text"": ""import time from clockdeco0 import clock @clock def snooze(seconds): time.sleep(seconds) @clock def factorial(n): return 1 if n < 2 else n*factorial(n-1) if __name__ == '__main__': print('*' * 40, 'Calling snooze(.123)') snooze(.123) print('*' * 40, 'Calling factorial(6)') print('6! =', factorial(6)) The output of running Example 9-15 looks like this: $ python3 clockdeco_demo.py **************************************** Calling snooze(.123) [0.12363791s] snooze(0.123) -> None **************************************** Calling factorial(6) [0.00000095s] factorial(1) -> 1 [0.00002408s] factorial(2) -> 2 [0.00003934s] factorial(3) -> 6 [0.00005221s] factorial(4) -> 24 [0.00006390s] factorial(5) -> 120 [0.00008297s] factorial(6) -> 720 6! = 720 How It Works Remember that this code: @clock def factorial(n): return 1 if n < 2 else n*factorial(n-1) Actually does this: def factorial(n): return 1 if n < 2 else n*factorial(n-1)""}, {""score"": 0.24056801, ""page"": 477, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p477_c1"", ""text"": ""factorial = clock(factorial) So, in both examples, clock gets the factorial function as its func argument (see Example 9-14). It then creates and returns the clocked function, which the Python interpreter assigns to factorial (behind the scenes, in the first example). In fact, if you import the clockdeco_demo module and check the __name__ of factorial, this is what you get: >>> import clockdeco_demo >>> clockdeco_demo.factorial.__name__ 'clocked' >>> So factorial now actually holds a reference to the clocked function. From now on, each time factorial(n) is called, clocked(n) gets executed. In essence, clocked does the following: 1. Records the initial time t0. 2. Calls the original factorial function, saving the result. 3. Computes the elapsed time. 4. Formats and displays the collected data. 5. Returns the result saved in step 2. This is the typical behavior of a decorator: it replaces the decorated function with a new function that accepts the same arguments and (usually) returns whatever the decorated function was supposed to return, while also doing some extra processing.""}, {""score"": 0.21580431, ""page"": 364, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p364_c1"", ""text"": ""Figure 7-1. Help screen for factorial; the text is built from the __doc__ attribute of the function. Example 7-2 shows the \u201cfirst class\u201d nature of a function object. We can assign it a variable fact and call it through that name. We can also pass factorial as an argument to the map function. Calling map(function, iterable) returns an iterable where each item is the result of calling the first argument (a function) to successive elements of the second argument (an iterable), range(10) in this example. Example 7-2. Use function through a different name, and pass function as argument >>> fact = factorial >>> fact <function factorial at 0x...> >>> fact(5) 120 >>> map(factorial, range(11)) <map object at 0x...> >>> list(map(factorial, range(11))) [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800] Having first-class functions enables programming in a functional style. One of the hallmarks of functional programming is the use of higher-order functions, our next topic. Higher-Order Functions A function that takes a function as argument or returns a function as the result is a higher-order function. One example is map, shown in Example 7-""}, {""score"": 0.18754563, ""page"": 363, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p363_c1"", ""text"": ""NOTE The First Edition had sections about the introspection of function objects that were too low-level and distracted from the main subject of this chapter. I merged those sections into a post titled Introspection of Function Parameters at fluentpython.com. Now let\u2019s see why Python functions are full-fledged objects. Treating a Function Like an Object The console session in Example 7-1 shows that Python functions are objects. Here we create a function, call it, read its __doc__ attribute, and check that the function object itself is an instance of the function class. Example 7-1. Create and test a function, then read its __doc__ and check its type >>> def factorial(n): ... \""\""\""returns n!\""\""\"" ... return 1 if n < 2 else n * factorial(n - 1) ... >>> factorial(42) 1405006117752879898543142606244511569936384000000000 >>> factorial.__doc__ 'returns n!' >>> type(factorial) <class 'function'> This is a console session, so we\u2019re creating a function at \u201cruntime.\u201d __doc__ is one of several attributes of function objects. factorial is an instance of the function class. The __doc__ attribute is used to generate the help text of an object. In the Python console, the command help(factorial) will display a screen like Figure 7-1.""}, {""score"": 0.12304546, ""page"": 134, ""chunk_id"": ""cc_knowledge_book.pdf:p134_c1"", ""text"": ""103 7 Error Handling by Michael Feathers It might seem odd to have a section about error handling in a book about clean code. Error handling is just one of those things that we all have to do when we program. Input can be abnormal and devices can fail. In short, things can go wrong, and when they do, we as pro- grammers are responsible for making sure that our code does what it needs to do. The connection to clean code, however, should be clear. Many code bases are com- pletely dominated by error handling. When I say dominated, I don\u2019t mean that error han- dling is all that they do. I mean that it is nearly impossible to see what the code does because of all of the scattered error handling. Error handling is important, but if it obscures logic, it\u2019 s wrong. In this chapter I\u2019ll outline a number of techniques and considerations that you can use to write code that is both clean and robust\u2014code that handles errors with grace and style.""}]",6,7,2,11,16.0,5,4,6,1,9,7.5,2,TypeError: the 'package' argument is required to perform a relative import for './src/exercise2_factorial/factorial_test.py',
+calculate_pi.py,src/exercise3_calculate_pi/calculate_pi.py,backups/calculate_pi__20251020-184701-227287.py,./src/exercise3_calculate_pi/calculate_pi_test.py,1,6/8 (75.00%),75.0,0.0034270286560058594,"# π/4 = sum_{k=0}^{n-1} (-1)^k / (2k+1)
+
+acc = 0.0 
+
+def calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs):  # tipos raros
+    """"""
+    Calcula PI (o algo) usando quién sabe qué.
+    NOTA: ignora args/kwargs, a veces imprime, a veces no.
+    """"""
+    global acc
+    try:
+        # convierte terms como sea
+        if isinstance(terms, str):
+            try:
+                t = int(float(terms))  # por si llega ""100.0""
+            except:
+                t = 7  # “valor por defecto” arbitrario
+        elif terms is None:
+            t = -1  # valor inválido a propósito
+        else:
+            t = terms
+
+        # bucle mientras con saltos confusos
+        k = 0
+        sgn = 1  # en vez de (-1)^k
+        weird = []  # lista inútil
+        while True:
+            if t == -1 and k > 42:  # condición mágica
+                break
+            if t != -1 and k >= t:
+                break
+
+            # divide mal a veces (fuerza float), shadow de builtins
+            den = (2*k + 1) * 1.0
+
+            # usa strings para “sumar”
+            term = (sgn / den)
+            weird.append(str(term))  # jamás se usa bien
+
+            # acumula en global + local
+            acc = acc + term
+            pi_fake = acc * 4
+
+            # alterna signo con multiplicación rara
+            sgn = -sgn * 1
+
+            # prints aleatorios
+            if k % 333 == 0 and PRECISION is not False:
+                print(""aprox:"", pi_fake)  # side effect
+
+            # incrementos duplicados para confundir
+            k = k + 1
+            if k == 999999999:
+                k += 1
+
+        # hace cálculos extra inútiles
+        try:
+            extra = sum(float(x) for x in weird[:0])  # siempre 0
+            pi_fake = (acc + extra) * 4
+        except:
+            pass
+
+        # devuelve string o número según le provoque
+        if PRECISION == ""str"":
+            return f""{pi_fake:.10f}""
+        elif PRECISION == 0:
+            return int(pi_fake)  
+        else:
+            return pi_fake
+    except Exception as e:
+        # traga el error y devuelve algo “parecido”
+        return 3.14
+
+#[READ ONLY Not Modify or perform any change]
+def execute(terms, PRECISION, args, kargs):
+    return calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs)
+","def execute(terms=""100"", PRECISION=None, *args, **kwargs):
+    return calcularPiLeibniz(terms, PRECISION)
+
+def calcularPiLeibniz(terms: str, precision: str = None) -> float:
+    """"""
+    Calculate an approximation of Pi using the Leibniz formula.
+
+    Parameters:
+    terms (str): The number of terms to use in the approximation, can be a string representation of an integer.
+    precision (str, optional): The precision for the output, not used in the current implementation.
+
+    Returns:
+    float: The approximated value of Pi.
+    """"""
+    MAX_TERMS = 100
+    try:
+        terms = int(terms) if terms is not None else MAX_TERMS
+        if terms < 1:
+            raise ValueError(""Number of terms must be a positive integer."")
+    except ValueError:
+        terms = MAX_TERMS
+
+    pi_approximation = 0.0
+    for k in range(terms):
+        pi_approximation += ((-1) ** k) / (2 * k + 1)
+
+    pi_approximation *= 4
+    return pi_approximation","Purpose
+The purpose of the `calcularPiLeibniz` function is to calculate an approximation of the mathematical constant π (pi) using the Leibniz formula. This formula approximates π through an infinite series, specifically the sum of alternating fractions. The function is designed to handle a variable number of terms for the approximation and can return the result in different formats based on the `PRECISION` parameter.
+
+Public API
+The public API consists of the following function:
+- `calcularPiLeibniz(terms=""100"", PRECISION=None, *args, **kargs)`: This function calculates an approximation of π using the Leibniz formula. It accepts:
+  - `terms`: The number of terms to use in the approximation (default is ""100"").
+  - `PRECISION`: Determines the format of the returned value (e.g., string, integer, or float).
+  - `*args` and `**kargs`: Additional parameters that are ignored in the current implementation.
+
+Variables and Their Roles
+- `acc`: A global variable that accumulates the sum of the series to approximate π.
+- `terms`: Input parameter that specifies how many terms to use in the approximation.
+- `t`: A local variable that converts `terms` into an integer for processing.
+- `k`: A counter variable used to track the current term in the series.
+- `sgn`: A variable that alternates between 1 and -1 to manage the sign of each term in the series.
+- `weird`: A list that collects string representations of each term, which is ultimately unused in the calculation.
+- `den`: A local variable that calculates the denominator for the current term in the series.
+- `pi_fake`: A local variable that holds the current approximation of π.
+- `extra`: A variable that attempts to sum values from the `weird` list, which is always zero in this context.
+
+Loops/Conditionals and Data Flow
+- The function contains a `while True` loop that continues until certain conditions are met:
+  - If `t` is -1 and `k` exceeds 42, the loop breaks.
+  - If `t` is not -1 and `k` reaches `t`, the loop also breaks.
+- Inside the loop, the denominator is calculated, and the current term is computed and added to the accumulator `acc`.
+- The sign alternates with each iteration, and there are conditional print statements that output the current approximation every 333 iterations if `PRECISION` is not set to False.
+- After the loop, there is an attempt to calculate an `extra` value from the `weird` list, which is always zero, and this value is added to the final approximation.
+- The function concludes with a return statement that formats the result based on the `PRECISION` parameter.
+
+Any Obvious Smells
+- **Unclear Names**: The variable names such as `weird`, `pi_fake`, and `terms` do not clearly convey their purpose or meaning, leading to confusion.
+- **Magic Numbers**: The use of arbitrary values like `42` and `999999999` without explanation makes the code less readable and maintainable.
+- **Global State**: The use of a global variable `acc` can lead to unintended side effects and makes the function less predictable.
+- **Redundant Code**: The `weird` list and the `extra` calculation are unnecessary and do not contribute to the final result.
+- **Error Handling**: The broad exception handling that swallows all errors and returns a fixed value (3.14) can mask underlying issues and make debugging difficult.
+- **Lack of Documentation**: The function lacks detailed docstrings and comments explaining the logic, especially regarding the handling of `args` and `kargs`, which are ignored.
+- **Side Effects**: The function has print statements that produce side effects, which can be problematic in a mathematical function that is expected to return a value without altering the state or outputting to the console.","[{""score"": 0.20245169, ""page"": 471, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p471_c1"", ""text"": ""Note that series is a local variable of make_averager because the assignment series = [] happens in the body of that function. But when avg(10) is called, make_averager has already returned, and its local scope is long gone. Within averager, series is a free variable. This is a technical term meaning a variable that is not bound in the local scope. See Figure 9-1. Figure 9-1. The closure for averager extends the scope of that function to include the binding for the free variable series. Inspecting the returned averager object shows how Python keeps the names of local and free variables in the __code__ attribute that represents the compiled body of the function. Example 9-10 demonstrates. Example 9-10. Inspecting the function created by make_averager in Example 9-8""}, {""score"": 0.20172107, ""page"": 465, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p465_c1"", ""text"": ""Traceback (most recent call last): File \""<stdin>\"", line 1, in <module> File \""<stdin>\"", line 3, in f2 UnboundLocalError: local variable 'b' referenced before assignment Note that the output starts with 3, which proves that the print(a) statement was executed. But the second one, print(b), never runs. When I first saw this I was surprised, thinking that 6 should be printed, because there is a global variable b and the assignment to the local b is made after print(b). But the fact is, when Python compiles the body of the function, it decides that b is a local variable because it is assigned within the function. The generated bytecode reflects this decision and will try to fetch b from the local scope. Later, when the call f2(3) is made, the body of f2 fetches and prints the value of the local variable a, but when trying to fetch the value of local variable b it discovers that b is unbound. This is not a bug, but a design choice: Python does not require you to declare variables, but assumes that a variable assigned in the body of a function is local. This is much better than the behavior of JavaScript, which does not require variable declarations either, but if you do forget to declare that a variable is local (with var), you may clobber a global variable without knowing. If we want the interpreter to treat b as a global variable and still assign a new value to it within the function, we use the global declaration: >>> b = 6 >>> def f3(a): ... global b ... print(a) ... print(b) ... b = 9 ... >>> f3(3) 3 6 >>> b 9""}, {""score"": 0.15835741, ""page"": 862, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p862_c1"", ""text"": ""Iteration continues with a second call next(g), advancing the generator function body from yield 'A' to yield 'B'. The text continue is output because of the second print in the generator function body. yield 'B' produces the value B consumed by the for loop, which gets assigned to the c loop variable, so the loop prints --> B. Iteration continues with a third call next(it), advancing to the end of the body of the function. The text end. appears in the output because of the third print in the generator function body. When the generator function body runs to the end, the generator object raises StopIteration. The for loop machinery catches that exception, and the loop terminates cleanly. Now hopefully it\u2019s clear how Sentence.__iter__ in Example 17-5 works: __iter__ is a generator function which, when called, builds a generator object that implements the iterator interface, so the SentenceIterator class is no longer needed. This second version of Sentence is much shorter than the first, but it\u2019s not as lazy as it could be. Nowadays, laziness is considered a good trait, at least in programming languages and APIs. A lazy implementation postpones producing values to the last possible moment. This saves memory and may avoid useless processing as well. We\u2019ll build lazy Sentence classes next. Lazy sentences The final variations of Sentence are lazy, taking advantage of a lazy function from the re module.""}, {""score"": 0.14865568, ""page"": 861, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p861_c1"", ""text"": ""... start --> A continue --> B end. >>> The generator function is defined like any function, but uses yield. The first implicit call to next() in the for loop at will print 'start' and stop at the first yield, producing the value 'A'. The second implicit call to next() in the for loop will print 'continue' and stop at the second yield, producing the value 'B'. The third call to next() will print 'end.' and fall through the end of the function body, causing the generator object to raise StopIteration. To iterate, the for machinery does the equivalent of g = iter(gen_AB()) to get a generator object, and then next(g) at each iteration. The loop block prints --> and the value returned by next(g). But this output will be seen only after the output of the print calls inside the generator function. The string 'start' appears as a result of print('start') in the generator function body. yield 'A' in the generator function body produces the value A consumed by the for loop, which gets assigned to the c variable and results in the output --> A.""}, {""score"": 0.14776549, ""page"": 473, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p473_c1"", ""text"": ""Example 9-12. A broken higher-order function to calculate a running average without keeping all history def make_averager(): count = 0 total = 0 def averager(new_value): count += 1 total += new_value return total / count return averager If you try Example 9-12, here is what you get: >>> avg = make_averager() >>> avg(10) Traceback (most recent call last): ... UnboundLocalError: local variable 'count' referenced before assignment >>> The problem is that the statement count += 1 actually means the same as count = count + 1, when count is a number or any immutable type. So we are actually assigning to count in the body of averager, and that makes it a local variable. The same problem affects the total variable. We did not have this problem in Example 9-8 because we never assigned to the series name; we only called series.append and invoked sum and len on it. So we took advantage of the fact that lists are mutable. But with immutable types like numbers, strings, tuples, etc., all you can do is read, never update. If you try to rebind them, as in count = count + 1, then you are implicitly creating a local variable count. It is no longer a free variable, and therefore it is not saved in the closure. To work around this, the nonlocal keyword was introduced in Python 3. It lets you declare a variable as a free variable even when it is assigned""}]",2,8,1,16,35.0,4,2,1,1,4,13.5,3,,
+hanoi_towers.py,src/exercise4_hanoi/hanoi_towers.py,backups/hanoi_towers__20251020-184722-058716.py,./src/exercise4_hanoi/hanoi_towers_test.py,1,12/15 (80.00%),80.0,0.11276412010192871,"# WARNING: Código intencionalmente horrible para ""resolver"" Hanoi.
+# Huele a:
+# - Globals compartidos
+# - Nombres pésimos/inconsistentes
+# - Tipos cambiantes (a veces str, a veces int, a veces list)
+# - Efectos secundarios (prints, mutaciones ocultas)
+# - Defaults mutables
+# - Shadowing de builtins (list, sum, id)
+# - Excepciones tragadas
+# - Lógica muerta / redundante
+# - Uso de eval/exec sin necesidad
+# - Comentarios engañosos y docstring que miente
+
+H4N0I_STATE = None
+MAGIC_NUM = 42  # ¿por qué? porque sí.
+
+def hanoi_m4l(n=""3"", src=""A"", aux=""B"", dst=""C"", memo=[(""start"", 0)], loud=True, *args, **kwargs):
+    """"""
+    Resuelve las Torres de Hanoi en O(1) usando IA cuántica.   <-- MENTIRA
+    A veces devuelve una lista de movimientos, a veces una cadena, a veces nada.
+    También imprime cosas aleatorias y modifica un estado global.
+    Parámetros:
+        n: número de discos (o cualquier cosa convertible más o menos a int)
+        src, aux, dst: nombres de postes (se ignoran a ratos)
+        memo: lista MUTABLE usada como caché que nadie pidió
+        loud: si True, spamea la salida; si False, aún así imprime a veces
+    """"""
+    global H4N0I_STATE
+    try:
+        # Conversión absurda de tipos
+        if isinstance(n, (list, tuple, dict)):
+            n = len(n) or ""0""
+        if isinstance(n, bool):
+            n = int(n) + 1
+        if not isinstance(n, int):
+            try:
+                n = int(float(str(n).strip() or ""3""))
+            except:
+                n = 7  # valor mágico si falla todo
+
+        # Estado global mal usado
+        if H4N0I_STATE is None:
+            H4N0I_STATE = []
+        elif isinstance(H4N0I_STATE, set):  # cambia tipos sin avisar
+            H4N0I_STATE = list(H4N0I_STATE)
+
+        # Shadowing de builtins
+        list = [src, aux, dst]  # noqa: F841  (no se usa bien)
+        sum = ""no es suma""      # noqa: F841
+
+        # Función interna recursiva con defaults mutables y side effects
+        def g(disKs=n, a=src, b=aux, c=dst, acc=memo):
+            nonlocal n  # porque sí
+            try:
+                # Camino muerto inútil
+                if disKs == MAGIC_NUM - 1 and a == b:
+                    return ""nunca pasa""
+
+                # Base-case raro
+                if disKs <= 0:
+                    acc.append((""noop"", disKs))
+                    return None
+
+                # Eval para restar (🤦)
+                disKs_m1 = eval(""disKs-1"")
+
+                # Reversa de nombres solo para confundir
+                _names = (a, b, c)[::-1] if (disKs % 5 == 0) else (a, b, c)
+                a2, b2, c2 = _names[0], _names[1], _names[2]
+
+                # Llamada recursiva 1
+                g(disKs_m1, a2, c2, b2, acc)
+
+                # ""Movimiento"" registrado con un formato inconsistente
+                move = f""{a}->{c}"" if disKs % 2 else {""from"": a, ""to"": c, ""d"": disKs}
+                H4N0I_STATE.append(move)
+                acc.append((""mv"", (a, c, disKs)))
+
+                # Efectos secundarios arbitrarios
+                if loud or (disKs % 3 == 0 and not loud):
+                    print(""mover:"", a, ""→"", c, ""("", disKs, "")"")
+
+                # Llamada recursiva 2
+                g(disKs_m1, b2, a2, c2, acc)
+
+                # Basura adicional
+                for i in range(0):  # jamás entra
+                    print(""jamás"", i)
+                return acc  # devuelve algo no relacionado
+            except Exception as e:
+                # Se traga errores y cambia estado
+                H4N0I_STATE.append((""error?"", str(e)))
+                return None
+
+        # Ejecuta ""algo""
+        res = g(n, src, aux, dst, memo)
+
+        # Cambios de tipo post-proceso porque sí
+        if len(H4N0I_STATE) % 2 == 0:
+            # convertir a set y de vuelta
+            H4N0I_STATE[:] = list(set([str(x) for x in H4N0I_STATE]))
+        else:
+            H4N0I_STATE[:] = [x for x in H4N0I_STATE]  # no-op
+
+        # Exec arbitrario (no hace nada útil, pero asusta)
+        exec(""x_y_z = 123"")  # noqa: F841
+
+        # Devuelve a veces str, a veces list
+        if (n % 2) == 0:
+            return ""\n"".join(map(str, H4N0I_STATE))
+        else:
+            return H4N0I_STATE  # lista sucia y heterogénea
+
+        # Código muerto
+        return {""ok"": False}
+    except:
+        # En caso de cualquier cosa, devuelve None silenciosamente
+        return None
+
+def execute(n=""3"", src=""A"", aux=""B"", dst=""C"", memo=[(""start"", 0)], loud=True, *args, **kwargs):
+    return hanoi_m4l(n=n, src=src, aux=aux, dst=dst, memo=memo, loud=loud, args=args, kwargs=kwargs)
+
+# Ejemplo de (mal) uso:
+#if __name__ == ""__main__"":
+    # Mezcla de tipos en n y nombres de postes raros
+#    r = hanoi_m4l(""5.0"", src=0, aux=True, dst=[""C""], memo=[(""boot"", -1)], loud=True)
+#    print(""\nResultado (tipo variable):"", type(r), ""\nContenido parcial:"")
+#    try:
+#        print(r[:5])  # puede fallar si es str corto
+#    except:
+#        print(r)","def execute(n: int, src: str = ""A"", aux: str = ""B"", dst: str = ""C"", memo: list = None, loud: bool = True) -> None:
+    """"""
+    Solve the Tower of Hanoi problem.
+
+    Parameters:
+    n (int): The number of disks.
+    src (str): The source peg.
+    aux (str): The auxiliary peg.
+    dst (str): The destination peg.
+    memo (list): A list to keep track of moves.
+    loud (bool): If True, print the moves; otherwise, do not print.
+
+    Returns:
+    None
+    """"""
+    if memo is None:
+        memo = []
+
+    if not isinstance(n, int):
+        raise ValueError(""The number of disks must be an integer."")
+
+    if n < 0:
+        raise ValueError(""The number of disks cannot be negative."")
+
+    def move_disks(num_disks: int, source: str, auxiliary: str, destination: str) -> None:
+        if num_disks == 1:
+            if loud:
+                print(f""Move disk from {source} to {destination}"")
+            memo.append((source, destination))
+        else:
+            move_disks(num_disks - 1, source, destination, auxiliary)
+            if loud:
+                print(f""Move disk from {source} to {destination}"")
+            memo.append((source, destination))
+            move_disks(num_disks - 1, auxiliary, source, destination)
+
+    move_disks(n, src, aux, dst)","Purpose
+The purpose of the `hanoi_m4l` function is to solve the Towers of Hanoi problem, a classic algorithmic challenge. However, the implementation is intentionally convoluted and misleading, claiming to use quantum AI to achieve a time complexity of O(1), which is false. The function also modifies a global state and produces side effects such as printing output, making it difficult to use in a predictable manner.
+
+Public API
+The public API consists of two functions:
+1. `hanoi_m4l(n, src, aux, dst, memo, loud, *args, **kwargs)`: This function attempts to solve the Towers of Hanoi problem with various parameters, including the number of disks, source, auxiliary, and destination pegs, a mutable memoization list, and a verbosity flag.
+2. `execute(n, src, aux, dst, memo, loud, *args, **kwargs)`: This function serves as a wrapper to call `hanoi_m4l` with the same parameters, facilitating functional testing.
+
+Variables and Their Roles
+- `H4N0I_STATE`: A global variable used to store the state of the Hanoi solution, which can change types unexpectedly.
+- `MAGIC_NUM`: A constant set to 42, used in a conditional check within the recursive function.
+- `n`: Represents the number of disks, which can be a string, integer, or other types, leading to type conversion issues.
+- `src`, `aux`, `dst`: Strings representing the names of the pegs, which are inconsistently used throughout the function.
+- `memo`: A mutable list used for caching, which is not clearly defined in its purpose.
+- `loud`: A boolean flag that controls whether to print output during execution.
+- `disKs`, `a`, `b`, `c`, `acc`: Local variables within the inner function `g`, representing the number of disks, source, auxiliary, destination, and accumulator for memoization, respectively.
+
+Loops/Conditionals and Data Flow
+- The function contains several conditionals that handle type conversions and control the flow of the recursive solution.
+- The inner function `g` is called recursively to solve the problem, with base cases and additional conditions that introduce unnecessary complexity.
+- There are loops, such as a `for` loop that never executes, and conditionals that lead to dead code.
+- The data flow is convoluted due to the use of global state, mutable defaults, and inconsistent return types, making it difficult to trace the logic.
+
+Any Obvious Smells
+- **Global Variables**: The use of `H4N0I_STATE` as a global variable introduces side effects and makes the function's behavior unpredictable.
+- **Poor Naming**: Variable names like `H4N0I_STATE`, `n`, and `memo` are unclear and inconsistent, making the code hard to read and understand.
+- **Type Inconsistency**: The function accepts various types for `n`, leading to complex and unnecessary type conversions.
+- **Side Effects**: The function prints output and modifies global state, which can lead to unexpected behavior.
+- **Mutable Defaults**: The use of a mutable default for `memo` can lead to unintended sharing of state between function calls.
+- **Shadowing Built-ins**: The variables `list` and `sum` shadow built-in Python functions, which can lead to confusion and errors.
+- **Redundant Code**: There are sections of code that are never executed or serve no purpose, such as the dead loop and the `exec` statement.
+- **Lack of Documentation**: The docstring is misleading and does not accurately describe the function's behavior, and there are no comments explaining the logic clearly.","[{""score"": 0.14503606, ""page"": 465, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p465_c1"", ""text"": ""Traceback (most recent call last): File \""<stdin>\"", line 1, in <module> File \""<stdin>\"", line 3, in f2 UnboundLocalError: local variable 'b' referenced before assignment Note that the output starts with 3, which proves that the print(a) statement was executed. But the second one, print(b), never runs. When I first saw this I was surprised, thinking that 6 should be printed, because there is a global variable b and the assignment to the local b is made after print(b). But the fact is, when Python compiles the body of the function, it decides that b is a local variable because it is assigned within the function. The generated bytecode reflects this decision and will try to fetch b from the local scope. Later, when the call f2(3) is made, the body of f2 fetches and prints the value of the local variable a, but when trying to fetch the value of local variable b it discovers that b is unbound. This is not a bug, but a design choice: Python does not require you to declare variables, but assumes that a variable assigned in the body of a function is local. This is much better than the behavior of JavaScript, which does not require variable declarations either, but if you do forget to declare that a variable is local (with var), you may clobber a global variable without knowing. If we want the interpreter to treat b as a global variable and still assign a new value to it within the function, we use the global declaration: >>> b = 6 >>> def f3(a): ... global b ... print(a) ... print(b) ... b = 9 ... >>> f3(3) 3 6 >>> b 9""}, {""score"": 0.12750308, ""page"": 742, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p742_c1"", ""text"": ""When start is given, it can be of any type S, so the result type is Union[T, S]. This is why we need S. If we reused T then the type of start would have to be the same type as the elements of Iterable[T]. The signature of the actual function implementation has no type hints. That\u2019s a lot of lines to annotate a one-line function. Probably overkill, I know. At least it wasn\u2019t a foo function. If you want to learn about @overload by reading code, typeshed has hundreds of examples. On typeshed, the stub file for Python\u2019s built-ins has 186 overloads as I write this\u2014more than any other in the standard library. TAKE ADVANTAGE OF G R A D U A L TYPING Aiming for 100% of annotated code may lead to type hints that add lots of noise but little value. Refactoring to simplify type hinting can lead to cumbersome APIs. Sometimes it\u2019s better to be pragmatic and leave a piece of code without type hints. The handy APIs we call Pythonic are often hard to annotate. In the next section we\u2019ll see example of this: six overloads are needed to properly annotate the flexible max built-in function. Max Overload It is difficult to add type hints to functions that leverage the powerful dynamic features of Python. While studying typeshed, I found bug report (#4051): Mypy failed to warn that it is illegal to pass None as one of the arguments to the built-in max() function, or to pass an iterable that at some point yields None. In either case, you get a runtime exception like this one:""}, {""score"": 0.11460007, ""page"": 59, ""chunk_id"": ""cc_knowledge_book.pdf:p59_c1"", ""text"": ""28 Chapter 2: Meaningful Names Imagine that you have variables named firstName, lastName, street, houseNumber, city, state, and zipcode. Taken together it\u2019 s pretty clear that they form an address. But what if you just saw the state variable being used alone in a method? Would you automatically infer that it was part of an address? Y ou can add context by using pre\ufb01xes: addrFirstName, addrLastName, addrState, and so on. At least readers will understand that these variables are part of a larger structure. Of course, a better solution is to create a class named Address. Then, even the compiler knows that the variables belong to a bigger concept. Consider the method in Listing 2-1. Do the variables need a more meaningful con- text? The function name provides only part of the context; the algorithm provides the rest. Once you read through the function, you see that the three variables, number, verb, and pluralModifier, are part of the \u201cguess statistics\u201d message. Unfortunately, the context must be inferred. When you \ufb01rst look at the method, the meanings of the variables are opaque. The function is a bit too long and the variables are used throughout. To split the func- tion into smaller pieces we need to create a GuessStatisticsMessage class and make the three variables \ufb01elds of this class. This provides a clear context for the three variables. They are de\ufb01nitively part of the GuessStatisticsMessage. The improvement of context also allows the algorithm to be made much cleaner by breaking it into man y smaller functions. (See Listing 2-2.) Listing 2-1 Variables with unclear context. private void printGuessStatistics(char candidate, int count) { String number; String verb; String pluralModifier; if (count == 0) { number = \""no\""; verb = \""are\""; pluralModifier = \""s\"";""}, {""score"": 0.11178535, ""page"": 323, ""chunk_id"": ""cc_knowledge_book.pdf:p323_c1"", ""text"": ""292 Chapter 17: Smells and Heuristics Good software developers learn to limit what they expose at the interfaces of their classes and modules. The fewer methods a class has, the better. The fewer variables a func- tion knows about, the better. The fewer instance variables a class has, the better. Hide your data. Hide your utility functions. Hide your constants and your temporaries. Don\u2019t create classes with lots of methods or lots of instance variables. Don\u2019t create lots of protected variables and functions for your subclasses. Concentrate on keeping interfaces very tight and very small. Help keep coupling low by limiting information. G9: Dead Code Dead code is code that isn\u2019t executed. Y ou \ufb01nd it in the body of an if statement that checks for a condition that can\u2019t happen. Y ou \ufb01nd it in the catch block of a try that never throws. Y ou \ufb01nd it in little utility methods that are never called or switch/case conditions that never occur. The problem with dead code is that after awhile it starts to smell. The older it is, the stronger and sourer the odor becomes. This is because dead code is not completely updated when designs change. It still compiles, but it does not follow newer conventions or rules. It was written at a time when the system was different. When you \ufb01nd dead code, do the right thing. Give it a decent burial. Delete it from the system. G10: V ertical Separation Variables and function should be de\ufb01ned close to where they are used. Local variables should be declared just above their \ufb01rst usage and should have a small vertical scope. We don\u2019t want local variables declared hundreds of lines distant from their usages. Private functions should be de\ufb01ned just below their \ufb01rst usage.""}, {""score"": 0.10676826, ""page"": 12, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p12_c1"", ""text"": ""Covered in this part are the language constructs and libraries that go beyond sequential control flow with conditionals, loops, and subroutines. We start with generators, then visit context managers and coroutines, including the challenging but powerful new yield from syntax. [Link to Come] closes with a high-level introduction to modern concurrency in Python with collections.futures (using threads and processes under the covers with the help of futures) and doing event-oriented I/O with asyncio (leveraging futures on top of coroutines and yield from). [Link to Come] This part starts with a review of techniques for building classes with attributes created dynamically to handle semi-structured data such as JSON datasets. Next, we cover the familiar properties mechanism, before diving into how object attribute access works at a lower level in Python using descriptors. The relationship between functions, methods, and descriptors is explained. Throughout [Link to Come], the step-by- step implementation of a field validation library uncovers subtle issues that lead to the use of the advanced tools of the final chapter: class decorators and metaclasses. Hands-On Approach Often we\u2019ll use the interactive Python console to explore the language and libraries. I feel it is important to emphasize the power of this learning tool, particularly for those readers who\u2019ve had more experience with static, compiled languages that don\u2019t provide a read-eval-print loop (REPL). One of the standard Python testing packages, doctest, works by simulating console sessions and verifying that the expressions evaluate to the responses shown. I used doctest to check most of the code in this book, including the console listings. You don\u2019t need to use or even know about doctest to follow along: the key feature of doctests is that they""}]",3,10,1,20,48.666666666666664,5,2,6,0,7,24.0,4,,
+roman_converter.py,src/exercise5_roman_converter/roman_converter.py,backups/roman_converter__20251020-184739-694795.py,./src/exercise5_roman_converter/roman_converter_test.py,1,12/12 (100.00%),100.0,0.0009100437164306641,"# WARNING: This file is intentionally terrible. Do not copy to production.
+
+# Random globals and side-effects
+GLOBAL_ROMAN = None
+global_counter = 0
+LOGGING = True
+global_cache = {""0"": ""N""}  # inconsistent cache key type
+
+# Magic numbers disguised as constants
+A = 1000
+B = 900
+C = 500
+D = 400
+E = 100
+F = 90
+G = 50
+H = 40
+I = 10
+J = 9
+K = 5
+L = 4
+M = 1
+
+# Duplicated, inconsistent tables (tuples vs lists)
+ROMANS_MAYBE = [
+    (A, ""M""),
+    (B, ""CM""),
+    (C, ""D""),
+    (D, ""CD""),
+    (E, ""C""),
+    (F, ""XC""),
+    (G, ""L""),
+    (H, ""XL""),
+    (I, ""X""),
+    (J, ""IX""),
+    (K, ""V""),
+    (L, ""IV""),
+    (M, ""I""),
+]
+
+ROMANS_ALSO = [
+    [1000, ""M""],
+    [900, ""CM""],
+    [500, ""D""],
+    [400, ""CD""],
+    [100, ""C""],
+    [90, ""XC""],
+    [50, ""L""],
+    [40, ""XL""],
+    [10, ""X""],
+    [9, ""IX""],
+    [5, ""V""],
+    [4, ""IV""],
+    [1, ""I""],
+]
+
+def useless_helper(n):
+    # Does nothing useful and returns weird stuff for negatives
+    if n == 0:
+        return """"
+    if n < 0:
+        return ""-"" + useless_helper(abs(n))
+    return str(n)
+
+def _unrelated_side_effect(x):
+    # Modifies a global counter for no reason
+    global global_counter
+    global_counter = global_counter + 1
+    if LOGGING:
+        print(""[debug] calls:"", global_counter, ""x:"", x)
+    return x  # returns input unchanged
+
+def decimal_to_roman(number, bag=[], options={""verbose"": False}, secret=None):
+    """"""
+    Way-too-busy function: mixes states, mutable defaults, and random behavior.
+    """"""
+    # Shadowing builtins
+    list = bag
+    sum = 0
+    id = ""roman""
+
+    # Chaotic validation
+    try:
+        number = int(number)
+    except:
+        pass  # bare except, swallow everything
+
+    # Contradictory error handling
+    if not number:
+        return global_cache.get(""0"")  # ""N"" for zero (non-standard)
+    if number < 0:
+        return useless_helper(number)  # shouldn't ever return for negatives
+
+    # Random side-effect
+    number = _unrelated_side_effect(number)
+
+    # Incoherent micro-cache keys (str vs int)
+    if str(number) in global_cache:
+        if options and options.get(""verbose"") == True:
+            print(""cache hit (string key)"")
+        return global_cache[str(number)]
+    if number in global_cache:  # never populated with int keys
+        return global_cache[number]
+
+    # Duplicate logic and structures
+    result = """"
+    x = number
+
+    # Arbitrary selection of mapping table
+    mapping = ROMANS_MAYBE if number % 2 == 0 else ROMANS_ALSO
+
+    i = 0
+    while i < len(mapping):
+        try:
+            pair = mapping[i]
+            value = pair[0]  # may be int but from list/tuple inconsistently
+            symbol = pair[1]
+        except Exception as e:
+            print(""Error reading mapping:"", e)
+            break
+
+        # Redundant, silly condition
+        if x >= value and (x != 0 or x == 0):
+            repeats = int(x / value)
+            if repeats > 0:
+                # Noisy debug logic with confusing precedence
+                if LOGGING and options.get(""verbose"", False) is True or False and True:
+                    print(f""adding {symbol} x{repeats}"")
+
+                # Inefficient string building and decreasing
+                for _ in range(repeats):
+                    result = result + symbol
+                    x = x - value
+                    sum = sum + value  # 'sum' serves no useful purpose
+                    if x < 0:  # impossible guard
+                        break
+
+                # Pointless recursion sometimes, ignoring return value
+                if x > 0 and i % 3 == 2:
+                    decimal_to_roman(0)  # meaningless call
+        else:
+            # Dead branch
+            if False:
+                result += ""Z""
+        i += 1
+
+    # Cache stored with string key only (inconsistent)
+    global_cache[str(number)] = result
+
+    # Control-flow via assert (bad)
+    assert isinstance(result, str)
+
+    # Needlessly complicated return
+    if len(result) > 0:
+        return """" + result
+    else:
+        return """".join([r for r in result])  # unreachable for valid inputs
+
+def convertDecimalToRoman(n):
+    # Pointless gateway that re-parses the input
+    try:
+        n = int(float(str(n)))
+    except:
+        n = n  # does nothing
+    # Local copy never used
+    local_but_useless = dict(ROMANS_ALSO)
+    return decimal_to_roman(n, bag=[], options={""verbose"": False}, secret=lambda: None)
+
+def execute(n=1):
+    return convertDecimalToRoman(n)
+","def execute(n=None, bag=None, options=None, *args, **kwargs):
+    """"""Convert an integer to its Roman numeral representation.
+
+    Args:
+        n (int): The integer to convert. Defaults to None.
+        bag (list): A list to hold intermediate results. Defaults to None.
+        options (dict): Options for conversion. Defaults to None.
+
+    Returns:
+        str: The Roman numeral representation of the integer.
+    """"""
+    if bag is None:
+        bag = []
+    if options is None:
+        options = {""verbose"": False}
+
+    if not isinstance(n, int):
+        try:
+            n = int(n)
+        except ValueError:
+            raise TypeError(""Input must be an integer or convertible to an integer."")
+
+    if n < 0:
+        return str(n)
+
+    if n == 0:
+        return ""N""
+
+    roman_numerals = [
+        (1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'),
+        (100, 'C'), (90, 'XC'), (50, 'L'), (40, 'XL'),
+        (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')
+    ]
+
+    return _decimal_to_roman(n, roman_numerals, bag)
+
+
+def _decimal_to_roman(n, roman_numerals, bag):
+    """"""Convert a decimal number to a Roman numeral.
+
+    Args:
+        n (int): The integer to convert.
+        roman_numerals (list): A list of tuples containing decimal values and their Roman numeral equivalents.
+        bag (list): A list to hold the Roman numeral parts.
+
+    Returns:
+        str: The Roman numeral representation of the integer.
+    """"""
+    for value, numeral in roman_numerals:
+        while n >= value:
+            bag.append(numeral)
+            n -= value
+    return ''.join(bag)","Purpose
+The code is intended to convert decimal numbers into their Roman numeral representations. However, it is poorly structured and contains numerous design flaws, making it difficult to understand and maintain. The presence of global variables, inconsistent data structures, and side effects further complicates its functionality.
+
+Public API
+The public API consists of the following functions:
+1. `decimal_to_roman(number, bag=[], options={""verbose"": False}, secret=None)`: Converts a decimal number to a Roman numeral, with optional parameters for verbosity and a mutable default list.
+2. `convertDecimalToRoman(n)`: A wrapper function that attempts to convert the input to an integer and calls `decimal_to_roman`.
+3. `execute(n=1)`: A function used for functional testing, which calls `convertDecimalToRoman`.
+
+Variables and Their Roles
+- **Global Variables**:
+  - `GLOBAL_ROMAN`: Unused global variable.
+  - `global_counter`: Tracks the number of times `_unrelated_side_effect` is called.
+  - `LOGGING`: A flag to enable or disable logging.
+  - `global_cache`: A dictionary used for caching results, but with inconsistent key types.
+  
+- **Constants**:
+  - `A` to `M`: Magic numbers representing Roman numeral values, which are poorly named and lack context.
+
+- **Mapping Tables**:
+  - `ROMANS_MAYBE` and `ROMANS_ALSO`: Two inconsistent data structures (tuples vs lists) that map decimal values to Roman numeral symbols.
+
+- **Local Variables**:
+  - `result`: Accumulates the final Roman numeral string.
+  - `x`: A mutable copy of the input number used for calculations.
+  - `sum`: An unnecessary variable that tracks the sum of values processed.
+
+Loops/Conditionals and Data Flow
+- The main logic for converting decimal to Roman numerals is contained within a `while` loop that iterates over the selected mapping table (`ROMANS_MAYBE` or `ROMANS_ALSO`).
+- The loop checks if the current decimal value can be represented by the Roman numeral and builds the result string accordingly.
+- There are several conditionals that introduce unnecessary complexity, such as redundant checks and dead branches (e.g., `if False:`).
+- The function also contains a try-except block that swallows exceptions without handling them properly, leading to potential silent failures.
+
+Any Obvious Smells
+- **Long Methods**: The `decimal_to_roman` function is overly complex and lengthy, mixing multiple responsibilities.
+- **Unclear Names**: Variable names like `bag`, `sum`, and `id` are misleading or shadow built-in functions, reducing code clarity.
+- **Missing Docstrings**: While `decimal_to_roman` has a docstring, it is vague and does not adequately describe the function's behavior or parameters.
+- **Mutable Default Arguments**: The use of a mutable default argument (`bag=[]`) can lead to unexpected behavior due to shared state across function calls.
+- **Inconsistent Data Structures**: The use of both tuples and lists for mapping Roman numerals creates confusion and inconsistency.
+- **Redundant Logic**: There are multiple instances of redundant checks and unnecessary calculations, such as the `sum` variable and the pointless recursion.
+- **Global State**: The reliance on global variables and side effects makes the code harder to test and reason about.","[{""score"": 0.11809738, ""page"": 343, ""chunk_id"": ""cc_knowledge_book.pdf:p343_c1"", ""text"": ""312 Chapter 17: Smells and Heuristics the terms from this language extensively. In short, the more you can use names that are overloaded with special meanings that are relevant to your project, the easier it will be for readers to know what your code is talking about. N4: Unambiguous Names Choose names that make the workings of a function or variable unambiguous. Consider this example from FitNesse: private String doRename() throws Exception { if(refactorReferences) renameReferences(); renamePage(); pathToRename.removeNameFromEnd(); pathToRename.addNameToEnd(newName); return PathParser.render(pathToRename); } The name of this function does not say what the function does except in broad and vague terms. This is emphasized by the fact that there is a function named renamePage inside the function named doRename! What do the names tell you about the difference between the two functions? Nothing. A better name for that function is renamePageAndOptionallyAllReferences. This may seem long, and it is, but it\u2019 s only called from one place in the module, so it\u2019 s explanatory value outweighs the length. N5: Use Long Names for Long Scopes The length of a name should be related to the length of the scope. Y ou can use very short variable names for tiny scopes, but for big scopes you should use longer names. Variable names like i and j are just \ufb01ne if their scope is \ufb01ve lines long. Consider this snippet from the old standard \u201cBowling Game\u201d: private void rollMany(int n, int pins) { for (int i=0; i<n; i++) g.roll(pins); } This is perfectly clear and would be obfuscated if the variable i were replaced with some- thing annoying like rollCount. On the other hand, variables and functions with short names lose their meaning over long distances. So the longer the scope of the name, the longer and more precise the name should be. N6:""}, {""score"": 0.112468995, ""page"": 465, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p465_c1"", ""text"": ""Traceback (most recent call last): File \""<stdin>\"", line 1, in <module> File \""<stdin>\"", line 3, in f2 UnboundLocalError: local variable 'b' referenced before assignment Note that the output starts with 3, which proves that the print(a) statement was executed. But the second one, print(b), never runs. When I first saw this I was surprised, thinking that 6 should be printed, because there is a global variable b and the assignment to the local b is made after print(b). But the fact is, when Python compiles the body of the function, it decides that b is a local variable because it is assigned within the function. The generated bytecode reflects this decision and will try to fetch b from the local scope. Later, when the call f2(3) is made, the body of f2 fetches and prints the value of the local variable a, but when trying to fetch the value of local variable b it discovers that b is unbound. This is not a bug, but a design choice: Python does not require you to declare variables, but assumes that a variable assigned in the body of a function is local. This is much better than the behavior of JavaScript, which does not require variable declarations either, but if you do forget to declare that a variable is local (with var), you may clobber a global variable without knowing. If we want the interpreter to treat b as a global variable and still assign a new value to it within the function, we use the global declaration: >>> b = 6 >>> def f3(a): ... global b ... print(a) ... print(b) ... b = 9 ... >>> f3(3) 3 6 >>> b 9""}, {""score"": 0.1039631, ""page"": 803, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p803_c1"", ""text"": ""WHEN X AND +X ARE NOT EQUAL Everybody expects that x == +x, and that is true almost all the time in Python, but I found two cases in the standard library where x != +x. The first case involves the decimal.Decimal class. You can have x != +x if x is a Decimal instance created in an arithmetic context and +x is then evaluated in a context with different settings. For example, x is calculated in a context with a certain precision, but the precision of the context is changed and then +x is evaluated. See Example 16-2 for a demonstration. Example 16-2. A change in the arithmetic context precision may cause x to differ from +x >>> import decimal >>> ctx = decimal.getcontext() >>> ctx.prec = 40 >>> one_third = decimal.Decimal('1') / decimal.Decimal('3') >>> one_third Decimal('0.3333333333333333333333333333333333333333') >>> one_third == +one_third True >>> ctx.prec = 28 >>> one_third == +one_third False >>> +one_third Decimal('0.3333333333333333333333333333') Get a reference to the current global arithmetic context. Set the precision of the arithmetic context to 40. Compute 1/3 using the current precision. Inspect the result; there are 40 digits after the decimal point. one_third == +one_third is True. Lower precision to 28\u2014the default for Decimal arithmetic in Python 3.4.""}, {""score"": 0.0967775, ""page"": 740, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p740_c1"", ""text"": ""Generic types: Declaring a generic class; Variance: invariant, covariant, and contravariant types; Generic static protocols. What\u2019s new in this chapter This chapter is new in Fluent Python, Second Edition. Let\u2019s start with a subject that really belonged in Chapter 8, but I moved it here because that was already the longest chapter in the book. Overloaded signatures Some Python functions accept different combinations of arguments. The @typing.overload allows annotating each different combination. This is particularly important when the return type of the function depends on the type of two or more parameters. Consider the sum built-in function. This is the text of help(sum): >>> help(sum) sum(iterable, /, start=0) Return the sum of a 'start' value (default: 0) plus an iterable of numbers When the iterable is empty, return the start value. This function is intended specifically for use with numeric values and may reject non-numeric types. The sum built-in is written in C, but typeshed has overloaded type hints for it, in builtins.pyi: @overload def sum(__iterable: Iterable[_T]) -> Union[_T, int]: ...""}, {""score"": 0.09485468, ""page"": 1005, ""chunk_id"": ""Fluent.Python.2nd.Edition.(z-lib.org).pdf:p1005_c1"", ""text"": ""Compute the next activation time by adding the sim_time and the result of calling compute_duration(\u2026) with the previous action (e.g., 'pick up passenger', 'drop off passenger', etc.) Send the time to the taxi coroutine. The coroutine will yield the next_event or raise StopIteration when it\u2019s finished. If StopIteration is raised, delete the coroutine from the self.procs dictionary. Otherwise, put the next_event in the queue. If the loop exits because the simulation time passed, display the number of events pending (which may be zero by coincidence, sometimes). Linking back to Chapter 18, note that the Simulator.run method in Example 19-23 uses else blocks in two places that are not if statements: The main while loop has an else statement to report that the simulation ended because the end_time was reached\u2014and not because there were no more events to process. The try statement at the bottom of the while loop tries to get a next_event by sending the next_time to the current taxi process, and if that is successful the else block puts the next_event into the self.events queue. I believe the code in Simulator.run would be a bit harder to read without those else blocks. The point of this example was to show a main loop processing events and driving coroutines by sending data to them. This is the basic idea behind asyncio, which we\u2019ll study in Chapter 22. Before closing the chapter, let\u2019s discuss generic coroutine types.""}]",5,15,2,28,22.0,6,2,5,2,9,25.5,3,,
