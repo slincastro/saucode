@@ -257,6 +257,11 @@
 
 ## 3. RAG Model
 
+### Evaluation Notebooks
+- **evals/evals_retrieval_ndcg_p5.ipynb**: A notebook that calculates retrieval performance metrics (Precision@5 and nDCG@5) for different retrievers using annotated ranking data. It loads results from a CSV file, computes metrics for each query and retriever type, generates summary statistics, and exports the results in various formats including LaTeX tables.
+
+- **evals/saucode_retrieval_eval.ipynb**: A comprehensive evaluation workflow notebook for the retrieval component of Saucode. It defines evaluation queries, leverages Qdrant and TF-IDF vectorization to retrieve top-k documents, generates a CSV for manual relevance annotation, and calculates precision and nDCG metrics after annotation. The notebook supports sparse vector retrieval and can be extended to include dense vector retrieval.
+
 ### LLM Model Used
 - OpenAI GPT models (configurable, default is gpt-4o-mini)
 
@@ -502,23 +507,130 @@ flowchart TD
 8. TF-IDF Vectorization: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
 
 
+# How to Run
 
+This section provides detailed instructions for setting up and running the Saucode system.
 
-Extension :
+## 1. Setting Up Qdrant Vector Database
 
-npm install
-npm run compile
+The Qdrant vector database is required for storing and retrieving context information.
 
-Run API :
+```bash
+# Navigate to the infra directory
+cd infra
 
+# Stop any existing Qdrant containers and remove volumes (if needed)
+docker-compose down --volumes
+
+# Build the container (use --no-cache to ensure fresh build)
+docker-compose build --no-cache
+
+# Start the Qdrant container in detached mode
+docker-compose up -d
+```
+
+You can verify that Qdrant is running by checking: `http://localhost:6333/`
+
+## 2. Loading Knowledge Chunks into Qdrant
+
+If you need to load the knowledge chunks into the Qdrant database:
+
+1. Navigate to the `infra` directory
+2. Open and run the `load-chunks.ipynb` notebook using Jupyter Notebook/Lab or VS Code
+   - This notebook will:
+     - Read PDF documents from the `infra/knowledge` directory
+     - Process them into chunks
+     - Create TF-IDF vectors
+     - Upload them to Qdrant
+
+Required dependencies:
+```bash
+pip install scikit-learn pypdf pandas qdrant-client
+```
+
+Key parameters that can be adjusted in the notebook:
+- `COLLECTION`: The collection name in Qdrant (default: "code_knowledge")
+- `chunk_size`: The size of each text chunk (default: 300 words)
+- `overlap`: The overlap between chunks (default: 50 words)
+
+## 3. Running the API
+
+The API provides the backend services for code analysis and improvement.
+
+```bash
+# Navigate to the API directory
+cd sauco-api
+
+# Create a virtual environment (if not already created)
 python3 -m venv venv
+
+# Activate the virtual environment
 source venv/bin/activate  # Linux/Mac
+# Or on Windows:
+# venv\Scripts\activate
 
-pip install fastapi uvicorn
+# Install dependencies
+pip install -r requirements.txt
+# Or with Poetry if using the pyproject.toml:
+# poetry install
 
-´uvicorn main:app --reload´
+# Set up your OpenAI API key
+cp .env.example .env
+# Edit .env file and add your OpenAI API key
+# OPENAI_API_KEY=your_actual_openai_api_key
 
+# Run the API with hot reloading
+uvicorn api:app --reload
+```
 
+The API will be available at: `http://127.0.0.1:8000/`
+
+You can test the API with:
+```bash
 curl -X POST http://127.0.0.1:8000/analyze/ \
      -H "Content-Type: application/json" \
-     -d '{"code": "print("hola mundo")"}'
+     -d '{"code": "print(\"hello world\")"}'
+```
+
+## 4. Running the VS Code Extension
+
+The VS Code extension provides the user interface for interacting with the API.
+
+### Development Mode
+
+```bash
+# Navigate to the extension directory
+cd sauco-de
+
+# Install dependencies
+npm install
+
+# Compile the extension
+npm run compile
+
+# Open the extension in VS Code
+code .
+```
+
+Then press F5 to launch the extension in a new VS Code window.
+
+### Installation for Use
+
+1. Build the extension package:
+   ```bash
+   cd sauco-de
+   npm install
+   npm run vscode:package
+   ```
+
+2. Install the extension in VS Code:
+   - Open VS Code
+   - Go to Extensions view (Ctrl+Shift+X)
+   - Click on the "..." menu in the top-right of the Extensions view
+   - Select "Install from VSIX..." and choose the generated .vsix file
+
+3. Configure the extension:
+   - Press Ctrl+Shift+P (or Cmd+Shift+P on macOS) to open the command palette
+   - Type "Sauco: Configure Settings" and select it
+   - Enter your API URL (e.g., http://localhost:8000) in the configuration panel
+   - Click "Save Configuration"
